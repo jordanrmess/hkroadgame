@@ -1,55 +1,68 @@
 <!-- This file displays whatever we want to display to the client -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiplayer Game</title>
+    <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+    
+    <script>
+        var ctx = document.getElementById("ctx").getContext("2d");
+        ctx.font="30px Arial";
 
-<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
-
-<script>
-    var ctx = document.getElementById("ctx").getContext("2d");
-    ctx.font="30px Arial";
-
-    // Initializes a connection between the client and the server.
-    var socket=io();
+        // Initializes a connection between the client and the server.
+        var socket=io();
 
 
-    // Listens to server to check whether updates have been made to other players. The data parameter is an array.
-    socket.on('newPositions',function(data){
-        // Clears the canvas
-        ctx.clearRect(0,0,500,500);
+        // Listens to server to check whether updates have been made to other players. The data parameter is an array.
+        socket.on('newPositions',function(data){
+            // Clears the canvas
+            ctx.clearRect(0,0,500,500);
 
-        // Loop through every player in the array data, and for each of them, draw their x and y coordinates.
-        for(var i=0; i< data.length;i++){
-           // data[i] - number of the player
-           ctx.fillText(data[i].number,data[i].x,data[i].y); 
-        }
-    });
+            // Loop through every player in the array data, and for each of them, draw their x and y coordinates.
+            for(var i=0; i< data.length;i++){
+               // data[i] - number of the player
+               ctx.fillText(data[i].number,data[i].x,data[i].y); 
+            }
+        });
 
-    // On key press
-    document.addEventListener("keydown",function(event){
-        console.log(event.keyCode);
-        if(event.keyCode === 39){
-            console.log("hit right key");
-            socket.emit('keyPress',{inputId:'right',state:true});
-        }
-        else if(event.keyCode === 40)
-            socket.emit('keyPress',{inputId:'down',state:true});
-        else if(event.keyCode === 37)
-            socket.emit('keyPress',{inputId:'left',state:true});
-        else if(event.keyCode === 38)
-            socket.emit('keyPress',{inputId:'up',state:true});
-    });
+        // On key press
+        document.addEventListener("keydown",function(event){
+            console.log(event.keyCode);
+            if(event.keyCode === 39){
+                console.log("hit right key");
+                socket.emit('keyPress',{inputId:'right',state:true});
+            }
+            else if(event.keyCode === 40)
+                socket.emit('keyPress',{inputId:'down',state:true});
+            else if(event.keyCode === 37)
+                socket.emit('keyPress',{inputId:'left',state:true});
+            else if(event.keyCode === 38)
+                socket.emit('keyPress',{inputId:'up',state:true});
+        });
 
-    // On key release, stop all movement
-    document.addEventListener("keyup", function(event){
-        if(event.keyCode === 39)
-            socket.emit('keyPress',{inputId:'right',state:false});
-        else if(event.keyCode === 40)
-            socket.emit('keyPress',{inputId:'down',state:false});
-        else if(event.keyCode === 37)
-            socket.emit('keyPress',{inputId:'left',state:false});
-        else if(event.keyCode === 38)
-            socket.emit('keyPress',{inputId:'up',state:false});
-    });
-</script>
-
+        // On key release, stop all movement
+        document.addEventListener("keyup", function(event){
+            if(event.keyCode === 39)
+                socket.emit('keyPress',{inputId:'right',state:false});
+            else if(event.keyCode === 40)
+                socket.emit('keyPress',{inputId:'down',state:false});
+            else if(event.keyCode === 37)
+                socket.emit('keyPress',{inputId:'left',state:false});
+            else if(event.keyCode === 38)
+                socket.emit('keyPress',{inputId:'up',state:false});
+        });
+    </script>
+    
+</head>
+<body>
 <button onclick="happy()">Happy</button>
+</body>
+</html>
+
+
+
+
+
+
+
