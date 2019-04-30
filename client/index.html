@@ -3,16 +3,17 @@
 <html>
 <head>
     <title>Multiplayer Game</title>
+
     <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
-    
+
+    <!-- ***** SCRIPT STARTS HERE ***** -->
     <script>
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font="30px Arial";
 
         // Initializes a connection between the client and the server.
         var socket=io();
-
 
         // Listens to server to check whether updates have been made to other players. The data parameter is an array.
         socket.on('newPositions',function(data){
@@ -53,7 +54,7 @@
                 socket.emit('keyPress',{inputId:'up',state:false});
         });
     </script>
-    
+
 </head>
 <body>
 <button onclick="happy()">Happy</button>

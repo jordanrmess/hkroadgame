@@ -21,6 +21,24 @@ var SOCKET_LIST = {};
 // Player list keeps track of all players.
 var PLAYER_LIST = {}; 
 
+var POINTS_LIST = {};
+
+// Constructor for keeping track of points in current game session
+var Points = function(){
+    var self = {
+        player1:0,
+        player2:0,
+    }
+    self.updateScore = function(player){
+        if(player === 1){
+            self.player1 ++;
+        }
+        else if(player === 2){
+            self.player2 ++;
+        }
+    }
+}
+
 // Create a player, passes id as parameter
 var Player = function(id) {
     var self = {
