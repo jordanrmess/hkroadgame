@@ -1,12 +1,17 @@
+// Express code
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
 
+// If query is '/' (nothing)
 app.get('/',function(req,res){
     res.sendFile(__dirname + '/client/index.html');
 });
 
+// If query is '/client'. Client can only request things from client folder
 app.use('/client',express.static(__dirname + '/client')); 
+
+// Server starts listening on port 2000
 serv.listen(2000);
 console.log("Server started");
 
@@ -41,7 +46,10 @@ var Player = function(id) {
    
 }
 
+// Initializes an io Socket object 
 var io = require('socket.io')(serv,{}); 
+
+// Whenever a connection is established, the following function will be called.
 io.sockets.on('connection',function(socket){
     socket.id=Math.random();
     socket.x=0;

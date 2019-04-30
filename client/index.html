@@ -1,10 +1,16 @@
+<!-- This file displays whatever we want to display to the client-->
+
 <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
 <script>
     var ctx = document.getElementById("ctx").getContext("2d");
     ctx.font="30px Arial";
+
+    // Initializes a connection between the client and the server.
     var socket=io();
 
+
+    // Listens to server to check whether updates have been made to other players.
     socket.on('newPositions',function(data){
         ctx.clearRect(0,0,500,500);
         for(var i=0; i< data.length;i++){
@@ -37,4 +43,5 @@
             socket.emit('keyPress',{inputId:'up',state:false});
     });
 </script>
+
 <button onclick="happy()">Happy</button>
