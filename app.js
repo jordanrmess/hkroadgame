@@ -46,7 +46,7 @@ var Entity = function(){
         y:250,
         spdX:0,
         spdY:0,
-        id:""
+        id:"",
     }
     self.update = function(){
         self.updatePosition();
@@ -97,10 +97,18 @@ var Player = function(id) {
             self.spdY=0;
         }
     }
+    
     Player.list[id] = self;
-    return self; 
-   
+
+    initPack.player.push({
+        id:self.id,
+        x:self.x,
+        y:self.y,
+        number:self.number,
+    });
+    return self;   
 }
+
 Player.list = {};
 
 Player.onConnect = function(socket){
@@ -122,6 +130,7 @@ Player.onConnect = function(socket){
 
 Player.onDisconnect = function(socket){
     delete Player.list[socket.id];
+    removePack.player.push(socket.id);
 }
 
 Player.update = function(){
@@ -130,9 +139,9 @@ Player.update = function(){
         var player = Player.list[i];
         player.update();
         pack.push({
+            id:player.id,
             x:player.x,
             y:player.y,
-            number:player.number
         });
     }
     return pack;
@@ -148,8 +157,6 @@ var Car = function(){
 
 // Initializes an io Socket object 
 var io = require('socket.io')(serv,{}); 
-
-// Whenever a connection is established, the following function will be called.
 io.sockets.on('connection',function(socket){
     // server assigns a unique id to the socket
     socket.id=Math.random();
@@ -165,19 +172,24 @@ io.sockets.on('connection',function(socket){
     });
 });
 
+var initPack = {player:[]};
+var removePack = {player:[]};
+
+
 // Loops through every player in our player list, and will update the X and Y position.
 setInterval(function(){
-
     // pack contains information about every single player in the game, and will be sent to every player conncted
     var pack = {
         player:Player.update(),
     }
-
     // Server emits the pack to each  connected client
     for(var i in SOCKET_LIST){
         var socket = SOCKET_LIST[i];
-        socket.emit('newPositions',pack);
+        socket.emit("init", initPack);
+        socket.emit("update",pack);
+        socket.emit("remove", removePack);
     }
+    initPack.player = [];
+    removePack.player = [];
 
-// The game will run at 25 frames per second.   
 },1000/25);

@@ -9,11 +9,11 @@
 
     <!-- ***** SCRIPT STARTS HERE ***** -->
     <script>
+        // container for the images
         var Img = {};
+
         Img.player = new Image();
         Img.player.src = "/client/img/bunny.png";
-
-
 
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font="30px Arial";
@@ -21,18 +21,59 @@
         // Initializes a connection between the client and the server.
         var socket=io();
 
-        // Listens to server to check whether updates have been made to other players. The data parameter is an array.
-        socket.on('newPositions',function(data){
-            // Clears the canvas
-            ctx.clearRect(0,0,500,500);
+        var Player = function(initPack){
+            var self = {};
+            self.id = initPack.id;
+            self.number = initPack.number;
+            self.x = initPack.x;
+            self.y = initPack.y;
+            Player.list[self.id] = self;
+            return self;
+        }
+        Player.list = {};
 
-            // Loop through every player in the array data, and for each of them, draw their x and y coordinates.
-            for(var i=0; i< data.player.length;i++){
-               // data[i] - number of the player
-               console.log("draws");
-               ctx.fillText(data.player[i].number,data.player[i].x, data.player[i].y); 
+        // init, when new entities are created, contains all data
+        socket.on("init", function(data){
+            for(var i = 0; i < data.player.length;i++){
+                new Player(data.player[i]);
             }
         });
+
+        // update, only contains the difference
+        socket.on("update", function(data){
+            for (var i = 0; i < data.player.length; i++){
+                var pack = data.player[i];
+                var p = Player.list[pack.id];
+                if(p){
+                    if(pack.x !== undefined)
+                        p.x = pack.x;
+                    if(pack.y !== undefined)
+                        p.y = pack.y;
+                }
+            }
+        });
+
+        // remove, notifies the client if entity has been removed
+        socket.on("remove",function(data){
+            for(var i=0; i<data.player.length; i++){
+                delete Player.list[data.player[i]];
+            }
+        });
+
+        // loop for drawing players in local Player list
+        setInterval(function(){
+            ctx.clearRect(0,0,500,500);
+            for(var i in Player.list){
+                ctx.fillText(Player.list[i].number, Player.list[i].x, Player.list[i].y);
+            }
+        }, 40);
+
+        // socket.on('newPositions',function(data){
+        //     ctx.clearRect(0,0,500,500);
+        //     for(var i=0; i< data.player.length;i++){
+        //        ctx.fillText(data.player[i].number,data.player[i].x, data.player[i].y); 
+        //     }
+        // });
 
         // On key press
         document.addEventListener("keydown",function(event){
