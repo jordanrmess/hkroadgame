@@ -29,6 +29,14 @@
             self.y = initPack.y;
             Player.list[self.id] = self;
             return self;
+
+            self.draw = function(){
+                var width = Img.player.width*2;
+                var height = Img.player.height*2;
+
+                ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x-width/2, self.y-height/2, width, height);
+            }
+
         }
         Player.list = {};
 

@@ -58,7 +58,6 @@ var Entity = function(){
     return self;
 }
 
-
 // Create a player, passes id as parameter
 var Player = function(id) {
     var self = Entity();
@@ -98,14 +97,26 @@ var Player = function(id) {
         }
     }
     
+    self.getInitPack = function(){
+        return{
+            id:self.id,
+            x:self.x,
+            y:self.y,
+            number:self.number,
+        }
+    }
+
+    self.getUpdatePack = function(){
+        return{
+            id:self.id,
+            x:self.x,
+            y:self.y,    
+        }
+    }
+
     Player.list[id] = self;
 
-    initPack.player.push({
-        id:self.id,
-        x:self.x,
-        y:self.y,
-        number:self.number,
-    });
+    initPack.player.push(self.getInitPack());
     return self;   
 }
 
@@ -126,6 +137,18 @@ Player.onConnect = function(socket){
             player.pressingDown = data.state; 
         }
     });
+
+    socket.emit("init",{
+        player:Player.getAllInitPack(),
+    })
+}
+
+Player.getAllInitPack = function(){
+    var players = [];
+    for(var i in Player.list){
+        players.push(Player.list[i].getInitPack());
+    }
+    return players;
 }
 
 Player.onDisconnect = function(socket){
@@ -138,11 +161,7 @@ Player.update = function(){
     for(var i in Player.list){
         var player = Player.list[i];
         player.update();
-        pack.push({
-            id:player.id,
-            x:player.x,
-            y:player.y,
-        });
+        pack.push(player.getUpdatePack());
     }
     return pack;
 }
