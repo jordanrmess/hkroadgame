@@ -37,11 +37,21 @@
             self.score = initPack.score;            
 
             self.draw = function(){
-                var width = Img.player1.width;
-                var height = Img.player1.height;
+                if(self.number === "1"){
+                    var width = Img.player1.width;
+                    var height = Img.player1.height;
 
-                ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, self.x-width/2, self.y-height/2, width, height);
+                    ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, self.x-width/2, self.y-height/2, width, height);
+                    
+                } else if(self.number === "2"){
+                    var width = Img.player2.width;
+                    var height = Img.player2.height;
+
+                    ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x-width/2, self.y-height/2, width, height);
+
+                }
             }
+
 
             Player.list[self.id] = self;
             console.log(initPack);
