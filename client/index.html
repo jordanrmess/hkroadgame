@@ -27,15 +27,18 @@
             self.number = initPack.number;
             self.x = initPack.x;
             self.y = initPack.y;
-            Player.list[self.id] = self;
-            return self;
+            self.score = initPack.score;
+            
 
             self.draw = function(){
-                var width = Img.player.width*2;
-                var height = Img.player.height*2;
+                var width = Img.player.width;
+                var height = Img.player.height;
 
                 ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x-width/2, self.y-height/2, width, height);
             }
+
+            Player.list[self.id] = self;
+            return self;
 
         }
         Player.list = {};
@@ -57,6 +60,8 @@
                         p.x = pack.x;
                     if(pack.y !== undefined)
                         p.y = pack.y;
+                    if(pack.score !== undefined)
+                        p.score = pack.score;
                 }
             }
         });
@@ -72,7 +77,7 @@
         setInterval(function(){
             ctx.clearRect(0,0,500,500);
             for(var i in Player.list){
-                ctx.fillText(Player.list[i].number, Player.list[i].x, Player.list[i].y);
+                Player.list[i].draw();
             }
         }, 40);
 

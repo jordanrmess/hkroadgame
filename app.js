@@ -68,6 +68,7 @@ var Player = function(id) {
     self.pressingUp = false;
     self.pressingDown = false;
     self.maxSpd = 10;
+    self.score = 0;
     
     var super_update = self.update;
     self.update = function(){
@@ -103,14 +104,17 @@ var Player = function(id) {
             x:self.x,
             y:self.y,
             number:self.number,
+            score:self.score,
         }
     }
 
+    // sent every single frame
     self.getUpdatePack = function(){
         return{
             id:self.id,
             x:self.x,
             y:self.y,    
+            score:self.score,
         }
     }
 
@@ -166,11 +170,22 @@ Player.update = function(){
     return pack;
 }
 
-var Car = function(){
+var Car = function(victim){
     var self = Entity();
     self.id = Math.random();
     self.spdX = 0;
     self.spdY = 30;
+    self.victim = victim;
+    self.toRemove = false;
+    var super_update = self.update;
+
+ //   self.update = function() {
+ //       for (var i in Player.list){
+ //           var p = Player.list[i];
+ //       } vid 11
+                
+ //   }
+
 }
 
 
