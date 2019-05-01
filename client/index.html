@@ -9,6 +9,12 @@
 
     <!-- ***** SCRIPT STARTS HERE ***** -->
     <script>
+        var Img = {};
+        Img.player = new Image();
+        Img.player.src = "/client/img/bunny.png";
+
+
+
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font="30px Arial";
 
@@ -21,9 +27,10 @@
             ctx.clearRect(0,0,500,500);
 
             // Loop through every player in the array data, and for each of them, draw their x and y coordinates.
-            for(var i=0; i< data.length;i++){
+            for(var i=0; i< data.player.length;i++){
                // data[i] - number of the player
-               ctx.fillText(data[i].number,data[i].x,data[i].y); 
+               console.log("draws");
+               ctx.fillText(data.player[i].number,data.player[i].x, data.player[i].y); 
             }
         });
 
