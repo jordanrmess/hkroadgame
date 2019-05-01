@@ -4,7 +4,7 @@
 <head>
     <title>Multiplayer Game</title>
 
-    <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+    <canvas id="ctx" width="725" height="408" style="border:1px solid #000000;"></canvas>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
 
     <!-- ***** SCRIPT STARTS HERE ***** -->
@@ -14,6 +14,10 @@
 
         Img.player = new Image();
         Img.player.src = "/client/img/bunny.png";
+
+        Img.map = new Image();
+        Img.map.src = "/client/img/map.svg";
+
 
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font="30px Arial";
@@ -75,11 +79,16 @@
 
         // loop for drawing players in local Player list
         setInterval(function(){
-            ctx.clearRect(0,0,500,500);
+            ctx.clearRect(0,0,725,408);
+            drawMap();
             for(var i in Player.list){
                 Player.list[i].draw();
             }
         }, 40);
+
+        var drawMap = function(){
+            ctx.drawImage(Img.map,0,0);
+        }
 
         // socket.on('newPositions',function(data){
         //     ctx.clearRect(0,0,500,500);
@@ -118,7 +127,6 @@
 
 </head>
 <body>
-<button onclick="happy()">Happy</button>
 </body>
 </html>
 
