@@ -18,27 +18,28 @@ console.log("Server started");
 // Socket list keeps track of all clients connected to the server. 
 var SOCKET_LIST = {};
 
+var AVAILABLE_PLAYERS = [1,2];
+
 // Player list keeps track of all players.
 // *** var PLAYER_LIST = {}; 
 
-var POINTS_LIST = {};
 
 
 // Constructor for keeping track of points in current game session
-var Points = function(){
-    var self = {
-        player1:0,
-        player2:0,
-    }
-    self.updateScore = function(player){
-        if(player === 1){
-            self.player1 ++;
-        }
-        else if(player === 2){
-            self.player2 ++;
-        }
-    }
-}
+// var Points = function(){
+//     var self = {
+//         player1:0,
+//         player2:0,
+//     }
+//     self.updateScore = function(player){
+//         if(player === 1){
+//             self.player1 ++;
+//         }
+//         else if(player === 2){
+//             self.player2 ++;
+//         }
+//     }
+// }
 
 var Entity = function(){
     var self = {
@@ -62,8 +63,8 @@ var Entity = function(){
 var Player = function(id) {
     var self = Entity();
     self.id = id; 
-    self.number = "" + Math.floor(10*Math.random());
-    self.pressingRigh = false;
+    self.number = "" + AVAILABLE_PLAYERS.shift();
+    self.pressingRight = false;
     self.pressingLeft = false;
     self.pressingUp = false;
     self.pressingDown = false;
@@ -143,6 +144,8 @@ Player.onConnect = function(socket){
     });
 
     socket.emit("init",{
+        // Server tells client "hey, you have this socket id"
+        selfId:socket.id,
         player:Player.getAllInitPack(),
     })
 }
@@ -170,12 +173,12 @@ Player.update = function(){
     return pack;
 }
 
-var Car = function(victim){
+var Car = function(){
     var self = Entity();
     self.id = Math.random();
     self.spdX = 0;
     self.spdY = 30;
-    self.victim = victim;
+    //self.victim = victim;
     self.toRemove = false;
     var super_update = self.update;
 
@@ -190,19 +193,28 @@ var Car = function(victim){
 
 
 // Initializes an io Socket object 
+
 var io = require('socket.io')(serv,{}); 
+var maxConnections=2;
+var currentConnections=0;
+
 io.sockets.on('connection',function(socket){
     // server assigns a unique id to the socket
+    if(currentConnections === maxConnections){
+        socket.disconnect();
+    }
+
     socket.id=Math.random();
     // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
-   
     Player.onConnect(socket);
+    currentConnections++;
     
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
         delete SOCKET_LIST[socket.id]; 
         Player.onDisconnect(socket);
+        currentConnections--;
     });
 });
 

@@ -12,8 +12,11 @@
         // container for the images
         var Img = {};
 
-        Img.player = new Image();
-        Img.player.src = "/client/img/bunny.png";
+        Img.player1 = new Image();
+        Img.player1.src = "/client/img/player1.png";
+
+        Img.player2 = new Image();
+        Img.player2.src = "/client/img/player2.png";        
 
         Img.map = new Image();
         Img.map.src = "/client/img/map.svg";
@@ -31,24 +34,31 @@
             self.number = initPack.number;
             self.x = initPack.x;
             self.y = initPack.y;
-            self.score = initPack.score;
-            
+            self.score = initPack.score;            
 
             self.draw = function(){
-                var width = Img.player.width;
-                var height = Img.player.height;
+                var width = Img.player1.width;
+                var height = Img.player1.height;
 
-                ctx.drawImage(Img.player, 0, 0, Img.player.width, Img.player.height, self.x-width/2, self.y-height/2, width, height);
+                ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, self.x-width/2, self.y-height/2, width, height);
             }
 
             Player.list[self.id] = self;
+            console.log(initPack);
             return self;
 
         }
         Player.list = {};
 
+        var selfId = null;
+
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
+            if(data.selfId){
+                //console.log("DEN FANNS: "+ data.selfId);
+                selfId = data.selfId;
+                //console.log("OCH DEN ÄR NU: "+selfId);
+            }
             for(var i = 0; i < data.player.length;i++){
                 new Player(data.player[i]);
             }
@@ -59,6 +69,7 @@
             for (var i = 0; i < data.player.length; i++){
                 var pack = data.player[i];
                 var p = Player.list[pack.id];
+                //console.log(pack);
                 if(p){
                     if(pack.x !== undefined)
                         p.x = pack.x;
@@ -79,8 +90,12 @@
 
         // loop for drawing players in local Player list
         setInterval(function(){
+            if(!selfId){
+                return;
+            }
             ctx.clearRect(0,0,725,408);
             drawMap();
+            drawScore();
             for(var i in Player.list){
                 Player.list[i].draw();
             }
@@ -90,12 +105,12 @@
             ctx.drawImage(Img.map,0,0);
         }
 
-        // socket.on('newPositions',function(data){
-        //     ctx.clearRect(0,0,500,500);
-        //     for(var i=0; i< data.player.length;i++){
-        //        ctx.fillText(data.player[i].number,data.player[i].x, data.player[i].y); 
-        //     }
-        // });
+        var drawScore = function(){
+            ctx.fillStyle = "white";
+            //console.log("SCORE is: " +Player.list[selfId].score);
+            var score = Player.list[selfId].score;
+            ctx.fillText(score, 0, 30);
+        }
 
         // On key press
         document.addEventListener("keydown",function(event){
