@@ -12,14 +12,18 @@
         // container for the images
         var Img = {};
 
+        // Player (bunny) images
         Img.player1 = new Image();
         Img.player1.src = "/client/img/player1.png";
-
         Img.player2 = new Image();
         Img.player2.src = "/client/img/player2.png";        
-
+        // Map image
         Img.map = new Image();
         Img.map.src = "/client/img/map.svg";
+
+        // Car image
+        Img.car = new Image();
+        Img.car.src = "/client/img/car1.png";
 
 
         var ctx = document.getElementById("ctx").getContext("2d");
@@ -42,7 +46,7 @@
                     var height = Img.player1.height;
 
                     ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, self.x-width/2, self.y-height/2, width, height);
-                    
+
                 } else if(self.number === "2"){
                     var width = Img.player2.width;
                     var height = Img.player2.height;

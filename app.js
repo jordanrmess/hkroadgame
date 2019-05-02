@@ -20,27 +20,6 @@ var SOCKET_LIST = {};
 
 var AVAILABLE_PLAYERS = [1,2];
 
-// Player list keeps track of all players.
-// *** var PLAYER_LIST = {}; 
-
-
-
-// Constructor for keeping track of points in current game session
-// var Points = function(){
-//     var self = {
-//         player1:0,
-//         player2:0,
-//     }
-//     self.updateScore = function(player){
-//         if(player === 1){
-//             self.player1 ++;
-//         }
-//         else if(player === 2){
-//             self.player2 ++;
-//         }
-//     }
-// }
-
 var Entity = function(){
     var self = {
         x:0,
@@ -71,6 +50,7 @@ var Player = function(id) {
     self.maxSpd = 10;
     self.score = 0;
 
+    // Check which player, and give different spawning points
     if(self.number === "1"){
         self.x = 42;
         self.y = 150;
@@ -135,6 +115,8 @@ var Player = function(id) {
 
 Player.list = {};
 
+
+
 Player.onConnect = function(socket){
     
     var player = Player(socket.id);
@@ -193,6 +175,7 @@ var Car = function(speedY){
     var super_update = self.update;
     Car.list[self.id] = self; 
 
+<<<<<<< HEAD
     self.update = function(){
         self.updateSpd();
         super_update();
@@ -200,6 +183,8 @@ var Car = function(speedY){
                 
     return self; 
 
+=======
+>>>>>>> 01f36da727a092074667409c95d8ad055bbcaac6
 }
 Car.list = {}; 
 
