@@ -120,6 +120,7 @@ Player.list = {};
 Player.onConnect = function(socket){
     
     var player = Player(socket.id);
+
     // Listens to client key presses, updates states of client accordingly
     socket.on('keyPress',function(data){
         if(data.inputId ==='left'){
@@ -163,19 +164,21 @@ Player.update = function(){
     }
     return pack;
 }
-
-var Car = function(speedY){
+var Car = function(x,y){
     var self = Entity();
+    self.x =x; 
+    self.y=y;
     self.id = Math.random();
     self.spdX = 0;
-    self.spdY = speedY;
-    self.drivingDown = false;
-    self.drivingUp = false;
+    //self.spdY = 10;
+    // self.drivingDown = false;
+    // self.drivingUp = false;
     //self.victim = victim;
     self.toRemove = false;
     var super_update = self.update;
 
     self.update = function(){
+       // console.log("line 179");
         super_update();
     }
     self.getInitPack = function(){
@@ -195,7 +198,6 @@ var Car = function(speedY){
     }
 
     Car.list[self.id] = self;    
-    
     initPack.car.push(self.getInitPack());
 
     return self; 
@@ -203,14 +205,19 @@ var Car = function(speedY){
 }
 Car.list = {}; 
 
+Car.onConnect = function(){
+    var car = Car(95,100);
+   // console.log("Car list: " + Car.list[car.id]);
+}
 Car.update = function(){
-    var test = Car(10); 
      var pack = [];
-     for(var i in Car.list[i]){
+     for(var i in Car.list){
          var car = Car.list[i]; 
+         //console.log(car);
          car.update(); 
 
          pack.push({
+             id:car.id,
              x:car.x,
              y:car.y
          });
@@ -219,22 +226,21 @@ Car.update = function(){
 }
 
 Car.getAllInitPack = function(){
+
     var cars = [];
     for(var i in Car.list){
         cars.push(Car.list[i].getInitPack());
     }
+    console.log(cars);
     return cars;
 }
-
-
-
 
 // Initializes an io Socket object 
 
 var io = require('socket.io')(serv,{}); 
 var maxConnections=2;
 var currentConnections=0;
-
+// var car = Car();
 io.sockets.on('connection',function(socket){
     // server assigns a unique id to the socket
     if(currentConnections === maxConnections){
@@ -255,14 +261,18 @@ io.sockets.on('connection',function(socket){
     });
 });
 
-var initPack = {player:[],
-car:[]};
+var initPack = {player:[],car:[]};
 var removePack = {player:[]};
 
+var initializeServer = true;
 
 // Loops through every player in our player list, and will update the X and Y position.
 setInterval(function(){
     // pack contains information about every single player in the game, and will be sent to every player conncted
+    if(initializeServer){
+        Car.onConnect(); 
+        initializeServer = false;
+    }
     var pack = {
         player:Player.update(),
         car:Car.update()

@@ -76,7 +76,7 @@
             self.draw = function() {
                 var width = Img.car.width*0.20;
                 var height = Img.car.height*0.20;
-                ctx.drawImage(Img.car,95,10,width,height);
+                ctx.drawImage(Img.car, 0, 0, Img.car.width, Img.car.height, self.x-width/2, self.y-height/2, width, height);
 
             }
             Car.list[self.id] = self; 
@@ -87,7 +87,6 @@
     
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
-            console.log("car: " + data.car);
             if(data.selfId){
                 //console.log("DEN FANNS: "+ data.selfId);
                 selfId = data.selfId;
@@ -118,6 +117,19 @@
                         p.score = pack.score;
                 }
             }
+
+            for (var i = 0; i < data.car.length; i++){
+                var pack = data.car[i];
+                var c = Car.list[pack.id];
+                
+                if(c){
+                    if(pack.x !== undefined)
+                        c.x = pack.x;
+                    if(pack.y !== undefined)
+                        c.y = pack.y;
+                }
+            }
+
         });
 
         // remove, notifies the client if entity has been removed
