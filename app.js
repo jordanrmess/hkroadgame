@@ -63,23 +63,26 @@ var Player = function(id) {
     self.update = function(){
         self.updateSpd();
         super_update();
+        if(self.x >= 600){
+            console.log("SUCCESS");
+        }
     }
 
     self.updateSpd = function(){
-        if(self.pressingRight){
+        if(self.pressingRight && self.x<680){
             self.spdX = self.maxSpd;
         }
-        else if(self.pressingLeft){
+        else if(self.pressingLeft && self.x>22){
             self.spdX = -self.maxSpd;
         }
         else{
             self.spdX=0;
         }
 
-        if(self.pressingDown){
+        if(self.pressingDown && self.y < 390){
             self.spdY = self.maxSpd;
         }
-        else if(self.pressingUp){
+        else if(self.pressingUp && self.y > 25){
             self.spdY = -self.maxSpd;
         }
         else{
@@ -164,13 +167,13 @@ Player.update = function(){
     }
     return pack;
 }
-var Car = function(x,y){
+var Car = function(x,y, spdY){
     var self = Entity();
     self.x =x; 
     self.y=y;
     self.id = Math.random();
     self.spdX = 0;
-    //self.spdY = 10;
+    self.spdY = spdY;
     // self.drivingDown = false;
     // self.drivingUp = false;
     //self.victim = victim;
@@ -178,11 +181,11 @@ var Car = function(x,y){
     var super_update = self.update;
 
     self.update = function(){
-        console.log("line 181");
+      //  console.log("line 181");
         if(self.y > 464){
-            self.y=50;
+            self.y=-450;
         }else{
-            self.y += 4;
+            self.y += self.spdY;
         }
         
         //super_update();
@@ -212,16 +215,18 @@ var Car = function(x,y){
 Car.list = {}; 
 
 Car.onConnect = function(){
-    var car = Car(123.5,0);
+    var car = Car(123.5,0,5);
+    //var car2 = Car();
+    //var car3 = Car();
    // console.log("Car list: " + Car.list[car.id]);
 }
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
          var car = Car.list[i]; 
-         console.log("car.y BEFORE update ",car.y);
+      //   console.log("car.y BEFORE update ",car.y);
          car.update(); 
-         console.log("car.y AFTER update ",car.y);
+      //   console.log("car.y AFTER update ",car.y);
 
 
          pack.push({
@@ -239,7 +244,7 @@ Car.getAllInitPack = function(){
     for(var i in Car.list){
         cars.push(Car.list[i].getInitPack());
     }
-    console.log(cars);
+ //   console.log(cars);
     return cars;
 }
 
