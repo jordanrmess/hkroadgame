@@ -175,7 +175,6 @@ var Car = function(speedY){
     var super_update = self.update;
     Car.list[self.id] = self; 
 
-<<<<<<< HEAD
     self.update = function(){
         self.updateSpd();
         super_update();
@@ -183,8 +182,6 @@ var Car = function(speedY){
                 
     return self; 
 
-=======
->>>>>>> 01f36da727a092074667409c95d8ad055bbcaac6
 }
 Car.list = {}; 
 
