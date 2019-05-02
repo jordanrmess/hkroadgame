@@ -48,23 +48,27 @@ var Player = function(id) {
     self.pressingUp = false;
     self.pressingDown = false;
     self.maxSpd = 10;
-    self.score = 0;
+    self.count = 0;
 
     // Check which player, and give different spawning points
-    if(self.number === "1"){
-        self.x = 42;
-        self.y = 150;
-    } else if(self.number === "2"){
-        self.x = 42;
-        self.y = 220;
+
+    self.setStartingPosition = function(){
+        if(self.number === "1"){
+            self.x = 42;
+            self.y = 150;
+        } else if(self.number === "2"){
+            self.x = 42;
+            self.y = 220;
+        }   
     }
-    
+
     var super_update = self.update;
     self.update = function(){
         self.updateSpd();
         super_update();
-        if(self.x >= 600){
-            console.log("SUCCESS");
+        if(self.x >= 680){
+            self.count++; // BUNNY MADE IT TO OTHER SIDE
+            self.setStartingPosition();
         }
     }
 
@@ -96,7 +100,7 @@ var Player = function(id) {
             x:self.x,
             y:self.y,
             number:self.number,
-            score:self.score,
+            count:self.count,
         }
     }
 
@@ -106,10 +110,11 @@ var Player = function(id) {
             id:self.id,
             x:self.x,
             y:self.y,    
-            score:self.score,
+            count:self.count,
         }
     }
 
+    self.setStartingPosition();
     Player.list[id] = self;
 
     initPack.player.push(self.getInitPack());
@@ -167,26 +172,33 @@ Player.update = function(){
     }
     return pack;
 }
-var Car = function(x,y, spdY){
+var Car = function(x,y, spdY, drivingDown){
     var self = Entity();
     self.x =x; 
     self.y=y;
     self.id = Math.random();
     self.spdX = 0;
     self.spdY = spdY;
-    // self.drivingDown = false;
-    // self.drivingUp = false;
-    //self.victim = victim;
+    self.drivingDown = drivingDown;
     self.toRemove = false;
     var super_update = self.update;
 
     self.update = function(){
-      //  console.log("line 181");
-        if(self.y > 464){
-            self.y=-450;
-        }else{
-            self.y += self.spdY;
+        if(self.drivingDown){
+            if(self.y > 464){
+                self.y=-450;
+            }else{
+                self.y += self.spdY;
+            }
+        } else{
+            if(self.y<-20){     
+                self.y=450
+            }else{
+                self.y -= self.spdY;
+            }
         }
+      //  console.log("line 181");
+
         
         //super_update();
     }
@@ -215,8 +227,16 @@ var Car = function(x,y, spdY){
 Car.list = {}; 
 
 Car.onConnect = function(){
-    var car = Car(123.5,0,5);
-    //var car2 = Car();
+    drivingDown = true;
+    var car1 = Car(123.5, 0, 5, drivingDown);
+    var car2 = Car(195.5, 0, 8, drivingDown);
+    var car3 = Car(265.5, -100,5, drivingDown);
+
+    drivingDown = false;
+    var car4 = Car(455.5, 0, 5, drivingDown);
+    var car5 = Car(123.5, 0, 5, drivingDown);
+    var car6 = Car(123.5, 0, 5, drivingDown);
+
     //var car3 = Car();
    // console.log("Car list: " + Car.list[car.id]);
 }
