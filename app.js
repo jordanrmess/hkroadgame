@@ -121,7 +121,7 @@ Player.list = {};
 
 
 Player.onConnect = function(socket){
-    console.log("hello");
+    
     var player = Player(socket.id);
     // Listens to client key presses, updates states of client accordingly
     socket.on('keyPress',function(data){
@@ -166,18 +166,27 @@ Player.update = function(){
     return pack;
 }
 
-var Car = function(){
+var Car = function(speedY){
     var self = Entity();
     self.id = Math.random();
     self.spdX = 0;
-    self.spdY = 30;
+    self.spdY = speedY;
     self.drivingDown = false;
     self.drivingUp = false;
     //self.victim = victim;
     self.toRemove = false;
     var super_update = self.update;
+    Car.list[self.id] = self; 
+
+    self.update = function(){
+        self.updateSpd();
+        super_update();
+    }
+                
+    return self; 
 
 }
+Car.list = {}; 
 
 
 // Initializes an io Socket object 
