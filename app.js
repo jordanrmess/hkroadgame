@@ -43,8 +43,8 @@ var AVAILABLE_PLAYERS = [1,2];
 
 var Entity = function(){
     var self = {
-        x:250,
-        y:250,
+        x:0,
+        y:0,
         spdX:0,
         spdY:0,
         id:"",
@@ -70,6 +70,14 @@ var Player = function(id) {
     self.pressingDown = false;
     self.maxSpd = 10;
     self.score = 0;
+
+    if(self.number === "1"){
+        self.x = 42;
+        self.y = 150;
+    } else if(self.number === "2"){
+        self.x = 42;
+        self.y = 220;
+    }
     
     var super_update = self.update;
     self.update = function(){
@@ -178,6 +186,8 @@ var Car = function(){
     self.id = Math.random();
     self.spdX = 0;
     self.spdY = 30;
+    self.drivingDown = false;
+    self.drivingUp = false;
     //self.victim = victim;
     self.toRemove = false;
     var super_update = self.update;
