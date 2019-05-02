@@ -41,6 +41,16 @@
         Img.car4.src = "/client/img/car4.png";
         carImages.push(Img.car4);
 
+        Img.car5 = new Image();
+        Img.car5.src = "/client/img/car5.png";
+        carImages.push(Img.car5);
+
+        Img.car6 = new Image();
+        Img.car6.src = "/client/img/car4.png";
+        carImages.push(Img.car4);
+
+        Img.blood = new Image();
+        Img.blood.src = "/client/img/blood.png";
 
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font="30px Arial";
@@ -54,7 +64,10 @@
             self.number = initPack.number;
             self.x = initPack.x;
             self.y = initPack.y;
-            self.count = initPack.count;            
+            self.alive = initPack.alive;
+            self.count = initPack.count;
+            self.xDeathPos = 0;
+            self.yDeathPos = 0;            
 
             self.draw = function(){
                 if(self.number === "1"){
@@ -74,7 +87,7 @@
 
 
             Player.list[self.id] = self;
-            console.log(initPack);
+          //  console.log(initPack);
             return self;
 
         }
@@ -83,7 +96,7 @@
         var selfId = null;
 
         var Car = function(initPack, image){
-            console.log("CAR's INITPACK", initPack);
+         //   console.log("CAR's INITPACK", initPack);
             var self = {}; 
             self.id = initPack.id; 
             self.x  = initPack.x; 
@@ -94,7 +107,7 @@
             self.draw = function() {
                 var width = self.image.width*0.20;
                 var height = self.image.height*0.20;
-                console.log(self.x, self.y);
+             //   console.log(self.x, self.y);
                 ctx.drawImage(self.image, 0, 0, self.image.width, self.image.height, self.x-width/2, self.y-height/2, width, height);
 
             }
@@ -114,7 +127,7 @@
             for(var i = 0; i < data.player.length;i++){
                 new Player(data.player[i]);
             }
-            console.log(carImages);
+            //console.log(carImages);
             for(var i in data.car){
                 new Car(data.car[i], carImages[i]);
             }
@@ -133,11 +146,17 @@
                         p.x = pack.x;
                     if(pack.y !== undefined)
                         p.y = pack.y;
+                    if(pack.xDeathPos !== undefined)
+                        p.xDeathPos = pack.xDeathPos;
+                    if(pack.yDeathPos !== undefined)
+                        p.yDeathPos = pack.yDeathPos;
+                    if(pack.alive !== undefined)
+                        p.alive = pack.alive;
                     if(pack.count !== undefined)
                         p.count = pack.count;
                 }
             }
-            console.log("data.car",data.car);
+         //   console.log("data.car",data.car);
             for (var i = 0; i < data.car.length; i++){
                 var pack = data.car[i];
                 var c = Car.list[pack.id];
@@ -159,6 +178,7 @@
             }
         });
 
+        var roadkillCoordinates = {};
         // loop for drawing players in local Player list
         setInterval(function(){
             if(!selfId){
@@ -167,8 +187,20 @@
             ctx.clearRect(0,0,725,408);
             drawMap();
             drawCount();
+            for(var key in roadkillCoordinates){
+                drawBlood(key, roadkillCoordinates[key]);
+            }
             for(var i in Player.list){
-                Player.list[i].draw();
+                p = Player.list[i];
+                if(p.alive === true){
+                    p.draw();
+                } else{
+                    console.log("TJABBA");
+                    drawBlood(p.xDeathPos, p.yDeathPos);
+                    roadkillCoordinates[p.xDeathPos] = p.yDeathPos;
+                    console.log("DEATH ",p.xDeathPos,p.yDeathPos);
+                }
+
             }
             for(var i in Car.list){
                 Car.list[i].draw();
@@ -187,11 +219,17 @@
             ctx.fillText(count, 18, 40);
         }
 
+        var drawBlood = function(x,y){
+            var width = Img.blood.width*0.05;
+            var height = Img.blood.height*0.05;
+            ctx.drawImage(Img.blood, 0, 0, Img.blood.width, Img.blood.height, x-width/2, y-height/2, width, height);
+        }
+
         // On key press
         document.addEventListener("keydown",function(event){
-            console.log(event.keyCode);
+          //  console.log(event.keyCode);
             if(event.keyCode === 39){
-                console.log("hit right key");
+           //     console.log("hit right key");
                 socket.emit('keyPress',{inputId:'right',state:true});
             }
             else if(event.keyCode === 40)

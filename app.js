@@ -35,6 +35,9 @@ var Entity = function(){
         self.x += self.spdX;
         self.y += self.spdY;
     }
+    self.getDistance = function(pt){
+        return Math.sqrt(Math.pow(self.x-pt.x,2) + Math.pow(self.y-pt.y,2));
+    }
     return self;
 }
 
@@ -47,12 +50,16 @@ var Player = function(id) {
     self.pressingLeft = false;
     self.pressingUp = false;
     self.pressingDown = false;
+    self.xDeathPos = 0;
+    self.yDeathPos = 0;
+    self.alive = true;
     self.maxSpd = 10;
     self.count = 0;
 
     // Check which player, and give different spawning points
 
     self.setStartingPosition = function(){
+       // self.alive = true;
         if(self.number === "1"){
             self.x = 42;
             self.y = 150;
@@ -99,8 +106,10 @@ var Player = function(id) {
             id:self.id,
             x:self.x,
             y:self.y,
+            alive:self.alive,
             number:self.number,
             count:self.count,
+
         }
     }
 
@@ -109,8 +118,12 @@ var Player = function(id) {
         return{
             id:self.id,
             x:self.x,
-            y:self.y,    
+            y:self.y,
+            xDeathPos:self.xDeathPos,
+            yDeathPos:self.yDeathPos,
+            alive:self.alive,    
             count:self.count,
+
         }
     }
 
@@ -169,6 +182,7 @@ Player.update = function(){
         var player = Player.list[i];
         player.update();
         pack.push(player.getUpdatePack());
+        player.alive=true;
     }
     return pack;
 }
@@ -191,14 +205,21 @@ var Car = function(x,y, spdY, drivingDown){
                 self.y += self.spdY;
             }
         } else{
-            if(self.y<-20){     
-                self.y=450
+            if(self.y<-40){     
+                self.y=490
             }else{
                 self.y -= self.spdY;
             }
         }
-      //  console.log("line 181");
-
+        for(var i in Player.list){
+            p = Player.list[i];
+            if(self.getDistance(p) < 45){
+                p.alive = false;
+                p.xDeathPos = p.x;
+                p.yDeathPos = p.y;
+                p.setStartingPosition();
+            }
+        }
         
         //super_update();
     }
@@ -218,6 +239,8 @@ var Car = function(x,y, spdY, drivingDown){
         }
     }
 
+
+
     Car.list[self.id] = self;    
     initPack.car.push(self.getInitPack());
 
@@ -234,8 +257,8 @@ Car.onConnect = function(){
 
     drivingDown = false;
     var car4 = Car(455.5, 0, 5, drivingDown);
-    var car5 = Car(123.5, 0, 5, drivingDown);
-    var car6 = Car(123.5, 0, 5, drivingDown);
+    var car5 = Car(525.5, 0, 7, drivingDown);
+    var car6 = Car(600.5, 0, 5, drivingDown);
 
     //var car3 = Car();
    // console.log("Car list: " + Car.list[car.id]);
