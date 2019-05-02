@@ -67,6 +67,7 @@
         var selfId = null;
 
         var Car = function(initPack){
+            console.log("CAR's INITPACK", initPack);
             var self = {}; 
             self.id = initPack.id; 
             self.x  = initPack.x; 
@@ -76,6 +77,7 @@
             self.draw = function() {
                 var width = Img.car.width*0.20;
                 var height = Img.car.height*0.20;
+                console.log(self.x, self.y);
                 ctx.drawImage(Img.car, 0, 0, Img.car.width, Img.car.height, self.x-width/2, self.y-height/2, width, height);
 
             }
@@ -117,7 +119,7 @@
                         p.score = pack.score;
                 }
             }
-
+            console.log("data.car",data.car);
             for (var i = 0; i < data.car.length; i++){
                 var pack = data.car[i];
                 var c = Car.list[pack.id];

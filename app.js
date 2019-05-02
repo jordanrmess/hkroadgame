@@ -178,8 +178,9 @@ var Car = function(x,y){
     var super_update = self.update;
 
     self.update = function(){
-       // console.log("line 179");
-        super_update();
+        console.log("line 181");
+        self.y += 1;
+        //super_update();
     }
     self.getInitPack = function(){
         return{
@@ -206,15 +207,17 @@ var Car = function(x,y){
 Car.list = {}; 
 
 Car.onConnect = function(){
-    var car = Car(95,100);
+    var car = Car(123.5,0);
    // console.log("Car list: " + Car.list[car.id]);
 }
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
          var car = Car.list[i]; 
-         //console.log(car);
+         console.log("car.y BEFORE update ",car.y);
          car.update(); 
+         console.log("car.y AFTER update ",car.y);
+
 
          pack.push({
              id:car.id,
