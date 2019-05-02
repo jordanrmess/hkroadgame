@@ -179,7 +179,12 @@ var Car = function(x,y){
 
     self.update = function(){
         console.log("line 181");
-        self.y += 1;
+        if(self.y > 464){
+            self.y=50;
+        }else{
+            self.y += 4;
+        }
+        
         //super_update();
     }
     self.getInitPack = function(){
