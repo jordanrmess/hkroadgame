@@ -49,9 +49,10 @@ var Player = function(id) {
     self.pressingLeft = false;
     self.pressingUp = false;
     self.pressingDown = false;
-    self.count = 0;
     self.maxSpd = 10;
     self.score = 0;
+    self.count = 0;
+
 
     // Check which player, and give different spawning points
     if(self.number === "1"){
@@ -97,6 +98,7 @@ var Player = function(id) {
             y:self.y,
             number:self.number,
             score:self.score,
+            count:self.count,
         }
     }
 
@@ -107,6 +109,7 @@ var Player = function(id) {
             x:self.x,
             y:self.y,    
             score:self.score,
+            score:self.count,
         }
     }
 
@@ -121,7 +124,7 @@ Player.list = {};
 
 
 Player.onConnect = function(socket){
-    
+    console.log("hello");
     var player = Player(socket.id);
     // Listens to client key presses, updates states of client accordingly
     socket.on('keyPress',function(data){
@@ -166,27 +169,18 @@ Player.update = function(){
     return pack;
 }
 
-var Car = function(speedY){
+var Car = function(){
     var self = Entity();
     self.id = Math.random();
     self.spdX = 0;
-    self.spdY = speedY;
+    self.spdY = 30;
     self.drivingDown = false;
     self.drivingUp = false;
     //self.victim = victim;
     self.toRemove = false;
     var super_update = self.update;
-    Car.list[self.id] = self; 
-
-    self.update = function(){
-        self.updateSpd();
-        super_update();
-    }
-                
-    return self; 
 
 }
-Car.list = {}; 
 
 
 // Initializes an io Socket object 
