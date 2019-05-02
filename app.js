@@ -20,6 +20,8 @@ var SOCKET_LIST = {};
 
 var AVAILABLE_PLAYERS = [1,2];
 
+
+
 var Entity = function(){
     var self = {
         x:0,
@@ -47,6 +49,7 @@ var Player = function(id) {
     self.pressingLeft = false;
     self.pressingUp = false;
     self.pressingDown = false;
+    self.count = 0;
     self.maxSpd = 10;
     self.score = 0;
 
