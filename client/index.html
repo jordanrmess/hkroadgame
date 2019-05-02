@@ -66,8 +66,28 @@
 
         var selfId = null;
 
+        var Car = function(initPack){
+            var self = {}; 
+            self.id = initPack.id; 
+            self.x  = initPack.x; 
+            self.y = initPack.y; 
+            
+            
+            self.draw = function() {
+                var width = Img.car.width*0.20;
+                var height = Img.car.height*0.20;
+                ctx.drawImage(Img.car,95,10,width,height);
+
+            }
+            Car.list[self.id] = self; 
+            return self;
+        }
+        Car.list = {}; 
+
+    
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
+            console.log("car: " + data.car);
             if(data.selfId){
                 //console.log("DEN FANNS: "+ data.selfId);
                 selfId = data.selfId;
@@ -76,6 +96,11 @@
             for(var i = 0; i < data.player.length;i++){
                 new Player(data.player[i]);
             }
+            for(var i = 0; i < data.car.length;i++){
+                new Car(data.car[i]);
+            }
+
+           
         });
 
         // update, only contains the difference
@@ -113,6 +138,10 @@
             for(var i in Player.list){
                 Player.list[i].draw();
             }
+            for(var i in Car.list){
+                Car.list[i].draw();
+            }
+
         }, 40);
 
         var drawMap = function(){

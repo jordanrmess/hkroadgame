@@ -137,6 +137,7 @@ Player.onConnect = function(socket){
         // Server tells client "hey, you have this socket id"
         selfId:socket.id,
         player:Player.getAllInitPack(),
+        car: Car.getAllInitPack()
     })
 }
 
@@ -173,17 +174,59 @@ var Car = function(speedY){
     //self.victim = victim;
     self.toRemove = false;
     var super_update = self.update;
-    Car.list[self.id] = self; 
 
     self.update = function(){
-        self.updateSpd();
         super_update();
     }
-                
+    self.getInitPack = function(){
+        return{
+            id:self.id,
+            x:self.x,
+            y:self.y
+        }
+    }
+
+    self.getUpdatePack = function(){
+        return{
+            id:self.id,
+            x:self.x,
+            y:self.y
+        }
+    }
+
+    Car.list[self.id] = self;    
+    
+    initPack.car.push(self.getInitPack());
+
     return self; 
 
 }
 Car.list = {}; 
+
+Car.update = function(){
+    var test = Car(10); 
+     var pack = [];
+     for(var i in Car.list[i]){
+         var car = Car.list[i]; 
+         car.update(); 
+
+         pack.push({
+             x:car.x,
+             y:car.y
+         });
+     }
+     return pack
+}
+
+Car.getAllInitPack = function(){
+    var cars = [];
+    for(var i in Car.list){
+        cars.push(Car.list[i].getInitPack());
+    }
+    return cars;
+}
+
+
 
 
 // Initializes an io Socket object 
@@ -212,7 +255,8 @@ io.sockets.on('connection',function(socket){
     });
 });
 
-var initPack = {player:[]};
+var initPack = {player:[],
+car:[]};
 var removePack = {player:[]};
 
 
@@ -221,6 +265,7 @@ setInterval(function(){
     // pack contains information about every single player in the game, and will be sent to every player conncted
     var pack = {
         player:Player.update(),
+        car:Car.update()
     }
     // Server emits the pack to each  connected client
     for(var i in SOCKET_LIST){
@@ -230,6 +275,8 @@ setInterval(function(){
         socket.emit("remove", removePack);
     }
     initPack.player = [];
+    initPack.car = []; 
     removePack.player = [];
+
 
 },1000/25);
