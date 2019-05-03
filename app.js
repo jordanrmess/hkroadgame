@@ -52,6 +52,7 @@ var Player = function(id) {
     self.pressingDown = false;
     self.xDeathPos = 0;
     self.yDeathPos = 0;
+    self.successCoords = []; 
     self.alive = true;
     self.maxSpd = 10;
     self.count = 0;
@@ -70,11 +71,14 @@ var Player = function(id) {
     }
 
     var super_update = self.update;
+    
     self.update = function(){
         self.updateSpd();
         super_update();
+
         if(self.x >= 680){
             self.count++; // BUNNY MADE IT TO OTHER SIDE
+            self.successCoords.push([self.x,self.y]); 
             self.setStartingPosition();
         }
     }
@@ -109,6 +113,7 @@ var Player = function(id) {
             alive:self.alive,
             number:self.number,
             count:self.count,
+            successCoords: self.successCoords
 
         }
     }
@@ -123,6 +128,7 @@ var Player = function(id) {
             yDeathPos:self.yDeathPos,
             alive:self.alive,    
             count:self.count,
+            successCoords: self.successCoords
 
         }
     }
@@ -220,7 +226,6 @@ var Car = function(x,y, spdY, drivingDown){
                 p.setStartingPosition();
             }
         }
-        
         //super_update();
     }
     self.getInitPack = function(){

@@ -12,6 +12,8 @@
         // container for the images
         var Img = {};
 
+
+
         // Player (bunny) images
         Img.player1 = new Image();
         Img.player1.src = "/client/img/player1.png";
@@ -67,8 +69,8 @@
             self.alive = initPack.alive;
             self.count = initPack.count;
             self.xDeathPos = 0;
-            self.yDeathPos = 0;            
-
+            self.yDeathPos = 0;  
+            self.successCoords = initPack.successCoords;           
             self.draw = function(){
                 if(self.number === "1"){
                     var width = Img.player1.width;
@@ -154,6 +156,8 @@
                         p.alive = pack.alive;
                     if(pack.count !== undefined)
                         p.count = pack.count;
+                    if(pack.successCoords !== undefined)
+                        p.successCoords = pack.successCoords;
                 }
             }
          //   console.log("data.car",data.car);
@@ -195,11 +199,15 @@
                 if(p.alive === true){
                     p.draw();
                 } else{
-                    console.log("TJABBA");
                     drawBlood(p.xDeathPos, p.yDeathPos);
                     roadkillCoordinates[p.xDeathPos] = p.yDeathPos;
-                    console.log("DEATH ",p.xDeathPos,p.yDeathPos);
+                
                 }
+                for(var j in p.successCoords){
+                    console.log(j);
+                    drawDummyBunny(p,p.successCoords[j][0],p.successCoords[j][1]);
+                }
+                
 
             }
             for(var i in Car.list){
@@ -216,13 +224,29 @@
             ctx.fillStyle = "white";
             //console.log("SCORE is: " +Player.list[selfId].score);
             var count = Player.list[selfId].count;
-            ctx.fillText(count, 18, 40);
+            ctx.fillText(count+" bunnies saved", 18, 40);
         }
 
         var drawBlood = function(x,y){
             var width = Img.blood.width*0.05;
             var height = Img.blood.height*0.05;
             ctx.drawImage(Img.blood, 0, 0, Img.blood.width, Img.blood.height, x-width/2, y-height/2, width, height);
+        }
+
+        var drawDummyBunny = function(currentPlayer, x,y){
+            if(currentPlayer.number === "1"){
+                    var width = Img.player1.width;
+                    var height = Img.player1.height;
+
+                    ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, x-width/2, y-height/2, width, height);
+
+                } else if(currentPlayer.number === "2"){
+                    var width = Img.player2.width;
+                    var height = Img.player2.height;
+
+                    ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, x-width/2, y-height/2, width, height);
+
+                }
         }
 
         // On key press
