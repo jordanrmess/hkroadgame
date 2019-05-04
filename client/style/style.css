@@ -10,3 +10,15 @@
 #endScreen{
     display:none;
 }
+
+#startScreen {
+    display:none;
+}
+
+#instructionsScreen{
+    display:none;
+}
+
+#waitingScreen {
+    display:none;
+}

@@ -304,7 +304,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:10, 
+        timeRemaining:30, 
         numConnections:0
     }
    
@@ -346,6 +346,8 @@ Game.init = function(){
 
 //Game cannot have more than 2 players 
 var maxConnections=2;
+var players_ready=0; 
+
 io.sockets.on('connection',function(socket){
     if(currentGame.numConnections === maxConnections){
         //socket.disconnect();
@@ -357,16 +359,27 @@ io.sockets.on('connection',function(socket){
     socket.id=Math.random();
     // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
-    Player.onConnect(socket);
-    //Add connection for new client added
-    currentGame.numConnections++;
+    socket.on("SIGN_IN_REQUEST", function(data){
+        currentGame.numConnections++;
+        if(data.username =='bob' && data.password == 'test'){
+            Player.onConnect(socket);
+            socket.emit("SIGN_IN_RESPONSE",{success:true});
+        }else{
+            socket.emit("SIGN_IN_RESPONSE",{success:false});
+        }
+    })
 
     //If the game has 2 players, start game
-    if(currentGame.numConnections===2){ 
-        io.emit("GAME_STARTED");
-        //Start timer method
-        currentGame.startTimer(io); 
-    }
+    socket.on("START_GAME",function(){ 
+        players_ready +=1; 
+        console.log(players_ready);
+        if(players_ready ==2){
+            io.emit("GAME_STARTED");
+            currentGame.startTimer(io); 
+        }else{
+            socket.emit("START_RESPONSE", {ready:false}); 
+        }
+    }); 
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
@@ -375,6 +388,9 @@ io.sockets.on('connection',function(socket){
         currentGame.numConnections--;
     });
 });
+
+
+
 
 
 var initPack = {player:[],car:[],game:[]};

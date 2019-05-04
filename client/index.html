@@ -8,8 +8,25 @@
 </head>
 <body>
     <div id="container">
+        <div id="signIn">
+            <p>Username: </p>
+            <input id="username" type="text" placeholder="Type username here"/>
+            <p>Password: </p>
+            <input id="password" type="text" placeholder="Type password here"/>
+            <button id="sign_in_button">Sign In</button>
+            <button id="sign_up_button">Sign up</button>
+
+        </div>
         <div id="startScreen">
             <p>Waiting for 1 more player to join...</p>
+        </div>
+        <div id="instructionsScreen">
+            <p>Welcome to Bunny Crossing</p>
+            <p>Instructions: Try and get as many bunnies across road as you can.</p>
+            <button id="start_game_button">Click to begin</button>
+        </div>
+        <div id="waitingScreen">
+            Waiting for the other player to begin game
         </div>
         <div id="fullScreen">
                 <p>Sorry, the game is full currently. Check back later.</p>
@@ -32,10 +49,13 @@
 
         <!-- ***** SCRIPT STARTS HERE ***** -->
         <script>
+
+            
             // container for the images
             var Img = {};
             var timer=30;
-    
+            var game; 
+
     
             // Player (bunny) images
             Img.player1 = new Image();
@@ -82,7 +102,36 @@
     
             // Initializes a connection between the client and the server.
             var socket=io();
-    
+
+            $("#start_game_button").click(function(){
+                socket.emit("START_GAME"); 
+            }); 
+            //sign in 
+            $("#sign_in_button").click(function(){
+                socket.emit('SIGN_IN_REQUEST',{username: $("#username").val(), password: $("#password").val() })
+            });
+
+            socket.on('SIGN_IN_RESPONSE',function(data){
+                if(data.success){
+                    $("#signIn").hide();
+                    $("#instructionsScreen").show();
+                    
+                }else{
+                    alert("Error signing in");
+                }
+            });
+
+            socket.on("START_RESPONSE",function(data){
+                $("#instructionsScreen").hide();
+                $("#ctx").hide();
+                $("#waitingScreen").show();
+            }); 
+            var Game = function(initPack){
+                var self = {}; 
+                self.numConnections = initPack.numConnections; 
+                self.timeRemaining = initPack.timeRemaining; 
+                return self;
+            }
             var Player = function(initPack){
                 var self = {};
                 self.id = initPack.id;
@@ -112,7 +161,7 @@
     
     
                 Player.list[self.id] = self;
-              //  console.log(initPack);
+
                 return self;
     
             }
@@ -121,7 +170,6 @@
             var selfId = null;
     
             var Car = function(initPack, image){
-             //   console.log("CAR's INITPACK", initPack);
                 var self = {}; 
                 self.id = initPack.id; 
                 self.x  = initPack.x; 
@@ -132,7 +180,6 @@
                 self.draw = function() {
                     var width = self.image.width*0.20;
                     var height = self.image.height*0.20;
-                 //   console.log(self.x, self.y);
                     ctx.drawImage(self.image, 0, 0, self.image.width, self.image.height, self.x-width/2, self.y-height/2, width, height);
     
                 }
@@ -140,23 +187,20 @@
                 return self;
             }
             Car.list = {}; 
-    
         
             // init, when new entities are created, contains all data
             socket.on("init", function(data){
                 if(data.selfId){
-                    //console.log("DEN FANNS: "+ data.selfId);
                     selfId = data.selfId;
-                    //console.log("OCH DEN ÄR NU: "+selfId);
                 }
                 for(var i = 0; i < data.player.length;i++){
                     new Player(data.player[i]);
                 }
-                //console.log(carImages);
                 for(var i in data.car){
                     new Car(data.car[i], carImages[i]);
                 }
-    
+                game = new Game(data.game); 
+                console.log("game object" + game.numConnections);
                
             });
     
@@ -185,7 +229,6 @@
                             p.successCoords = pack.successCoords;
                     }
                 }
-             //   console.log("data.car",data.car);
                 for (var i = 0; i < data.car.length; i++){
                     var pack = data.car[i];
                     var c = Car.list[pack.id];
@@ -197,6 +240,9 @@
                             c.y = pack.y;
                     }
                 }
+
+                game.timeRemaining = data.game.timeRemaining;
+                game.numConnections = data.game.numConnections;
     
             });
     
@@ -212,6 +258,8 @@
 
             socket.on("GAME_STARTED",function(data){
                 $("#startScreen").hide();
+                $("#waitingScreen").hide();
+                $("#instructionsScreen").hide();
                 $("#ctx").show(); 
             });
 
@@ -245,8 +293,6 @@
             });
 
             socket.on("MAX_CONNECTIONS",function(){
-                $("#ctx").hide();
-                $("#startScreen").hide();
                 $("#fullScreen").show();
             });
     
@@ -291,7 +337,6 @@
     
             var drawCount = function(){
                 ctx.fillStyle = "white";
-                //console.log("SCORE is: " +Player.list[selfId].score);
                 var count = Player.list[selfId].count;
                 ctx.fillText(count+" bunnies saved", 18, 40);
             }
@@ -307,7 +352,6 @@
             }
     
             var drawDummyBunny = function(currentPlayer, x,y){
-                console.log(x+ "  " + y);
                 if(currentPlayer.number === "1"){
                         var width = Img.player1.width;
                         var height = Img.player1.height;
@@ -325,9 +369,7 @@
     
             // On key press
             document.addEventListener("keydown",function(event){
-              //  console.log(event.keyCode);
                 if(event.keyCode === 39){
-               //     console.log("hit right key");
                     socket.emit('keyPress',{inputId:'right',state:true});
                 }
                 else if(event.keyCode === 40)
