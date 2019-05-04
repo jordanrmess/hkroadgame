@@ -41,13 +41,6 @@ var Entity = function(){
     return self;
 }
 
-// function gameClock() {
-//     timeRemaining = 30; 
-//     timeRemaining = timeRemaining - 1;
-   
-//     if (timeRemaining > 0)
-//         setTimeout(countDown, 1000);
-// }
 
 // Create a player, passes id as parameter
 var Player = function(id) {
@@ -173,7 +166,8 @@ Player.onConnect = function(socket){
         // Server tells client "hey, you have this socket id"
         selfId:socket.id,
         player:Player.getAllInitPack(),
-        car: Car.getAllInitPack()
+        car: Car.getAllInitPack(),
+        game: currentGame.getInitPack()
     })
 }
 
@@ -284,7 +278,6 @@ Car.update = function(){
          car.update(); 
       //   console.log("car.y AFTER update ",car.y);
 
-
          pack.push({
              id:car.id,
              x:car.x,
@@ -303,35 +296,89 @@ Car.getAllInitPack = function(){
  //   console.log(cars);
     return cars;
 }
-
-// Initializes an io Socket object 
-
 var io = require('socket.io')(serv,{}); 
-var maxConnections=2;
-var currentConnections=0;
-// var car = Car();
-io.sockets.on('connection',function(socket){
-    // server assigns a unique id to the socket
-    if(currentConnections === maxConnections){
-        socket.disconnect();
+var currentGame;
+
+//Game object stores important information about the current game
+var Game = function(){
+
+    //Time starts at 30 seconds
+    var self = {
+        timeRemaining:30, 
+        numConnections:0
+    }
+   
+
+    self.startTimer = function() {
+        if(self.timeRemaining > 0){
+            self.timeRemaining-=1; 
+            setTimeout(self.startTimer,1000)
+        }else{
+            //Time has run out, alert the clients
+            io.emit("GAME_OVER"); 
+        }
+        
     }
 
+    self.getInitPack = function(){
+        return {
+            timeRemaining: self.timeRemaining,
+            numConnections: self.numConnections
+        }
+    }
+
+    self.getUpdatePack = function() {
+        return{
+            timeRemaining: self.timeRemaining,
+            numConnections: self.numConnections
+        }
+    }
+
+    initPack.game = (self.getInitPack()); 
+    return self; 
+}
+
+//Creating game object
+Game.init = function(){
+    currentGame = Game();
+}
+
+
+//Game cannot have more than 2 players 
+var maxConnections=2;
+io.sockets.on('connection',function(socket){
+    if(currentGame.numConnections === maxConnections){
+        //socket.disconnect();
+        //Third person joins, send message to this client that game is full
+        socket.emit("MAX_CONNECTIONS");
+    }
+
+    // server assigns a unique id to the socket
     socket.id=Math.random();
     // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
     Player.onConnect(socket);
-    currentConnections++;
-    
+    //Add connection for new client added
+    currentGame.numConnections++;
+
+    //If the game has 2 players, start game
+    if(currentGame.numConnections===2){ 
+        io.emit("GAME_STARTED");
+        //Start timer method
+        currentGame.startTimer(io); 
+    }
+
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
         delete SOCKET_LIST[socket.id]; 
         Player.onDisconnect(socket);
-        currentConnections--;
+        currentGame.numConnections--;
     });
 });
 
+
 var initPack = {player:[],car:[],game:[]};
-var removePack = {player:[]};
+var removePack = {player:[],game:[]};
 
 var initializeServer = true;
 
@@ -339,12 +386,15 @@ var initializeServer = true;
 setInterval(function(){
     // pack contains information about every single player in the game, and will be sent to every player conncted
     if(initializeServer){
+        //Init Game object 
+        Game.init();
         Car.onConnect(); 
         initializeServer = false;
     }
     var pack = {
         player:Player.update(),
         car:Car.update(),
+        game:currentGame.getUpdatePack()
     }
     // Server emits the pack to each  connected client
     for(var i in SOCKET_LIST){
