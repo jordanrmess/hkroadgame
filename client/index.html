@@ -14,6 +14,13 @@
         <div id="fullScreen">
                 <p>Sorry, the game is full currently. Check back later.</p>
         </div>
+        <div id="endScreen">
+            <p>Final Scores:</p>
+            <br> 
+            <p id="player_1_score">Player 1 Score: </p>
+            <p id="player_2_score">Player 2 Score: </p>
+            <p id="winner">The winner is player </p>
+        </div>
         <div id="timer">
 
         </div>
@@ -208,8 +215,33 @@
                 $("#ctx").show(); 
             });
 
+            //Game is now over, show players scores 
             socket.on("GAME_OVER",function(data){
                 $("#ctx").hide();
+                $("#endScreen").show();
+                
+                //Loop through players and display score
+                //Also check who won and display that
+                var high_score=0; 
+                var winner; 
+                for(var i in Player.list){
+                    var p = Player.list[i];
+                    if(p.count > high_score){
+                        high_score = p.count;
+                        winner = p.number; 
+                    }
+                    if(p.number== 1){
+                        $("#player_1_score").append(p.count);
+                    }else if(p.number ==2){
+                        $("#player_2_score").append(p.count);
+                    }
+
+                }
+                $("#winner").append(winner);
+
+                // $("#player_1_score").append(Player.list[0].count);
+                // $("#player_2_score").append(Player.list[1].count);
+
             });
 
             socket.on("MAX_CONNECTIONS",function(){
@@ -242,7 +274,6 @@
                     
                     }
                     for(var j in p.successCoords){
-                        console.log(j);
                         drawDummyBunny(p,p.successCoords[j][0],p.successCoords[j][1]);
                     }
                     

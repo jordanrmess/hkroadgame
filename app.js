@@ -304,7 +304,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:30, 
+        timeRemaining:10, 
         numConnections:0
     }
    
@@ -315,7 +315,7 @@ var Game = function(){
             setTimeout(self.startTimer,1000)
         }else{
             //Time has run out, alert the clients
-            io.emit("GAME_OVER"); 
+            io.emit("GAME_OVER",Player.update()); 
         }
         
     }
