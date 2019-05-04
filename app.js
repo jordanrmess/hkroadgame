@@ -2,7 +2,7 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
-
+var timeRemaining; 
 // If query is '/' (nothing)
 app.get('/',function(req,res){
     res.sendFile(__dirname + '/client/index.html');
@@ -40,6 +40,14 @@ var Entity = function(){
     }
     return self;
 }
+
+// function gameClock() {
+//     timeRemaining = 30; 
+//     timeRemaining = timeRemaining - 1;
+   
+//     if (timeRemaining > 0)
+//         setTimeout(countDown, 1000);
+// }
 
 // Create a player, passes id as parameter
 var Player = function(id) {
@@ -322,7 +330,7 @@ io.sockets.on('connection',function(socket){
     });
 });
 
-var initPack = {player:[],car:[]};
+var initPack = {player:[],car:[],game:[]};
 var removePack = {player:[]};
 
 var initializeServer = true;
@@ -336,7 +344,7 @@ setInterval(function(){
     }
     var pack = {
         player:Player.update(),
-        car:Car.update()
+        car:Car.update(),
     }
     // Server emits the pack to each  connected client
     for(var i in SOCKET_LIST){
@@ -347,6 +355,7 @@ setInterval(function(){
     }
     initPack.player = [];
     initPack.car = []; 
+    initPack.game = []; 
     removePack.player = [];
 
 
