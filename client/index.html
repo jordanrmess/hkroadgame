@@ -110,6 +110,10 @@
             $("#sign_in_button").click(function(){
                 socket.emit('SIGN_IN_REQUEST',{username: $("#username").val(), password: $("#password").val() })
             });
+            $("#sign_up_button").click(function(){
+                socket.emit('SIGN_UP_REQUEST',{username: $("#username").val(), password: $("#password").val() })
+            });
+
 
             socket.on('SIGN_IN_RESPONSE',function(data){
                 if(data.success){
@@ -118,6 +122,15 @@
                     
                 }else{
                     alert("Error signing in");
+                }
+            });
+
+            socket.on('SIGN_UP_RESPONSE',function(data){
+                if(data.success){
+                    $("#instructionsScreen").show();
+                    $("#signIn").hide();
+                }else{
+                    alert("Username already exists"); 
                 }
             });
 

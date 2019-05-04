@@ -296,6 +296,31 @@ Car.getAllInitPack = function(){
  //   console.log(cars);
     return cars;
 }
+
+var USERS = {
+    "jordan":"test",
+    "helena":"password"
+}; 
+
+//Callback functions mock database promises
+var isValidPassword = function(data,cb){
+    setTimeout(function(){
+        cb(USERS[data.username]=== data.password)
+    },10); 
+}
+
+var userExists = function(data,cb){
+    setTimeout(function(){
+        cb(USERS[data.username])
+    },10); 
+}
+
+var addUser = function(data,cb){
+    setTimeout(function(){
+        USERS[data.username] = data.password;
+        cb();
+    },10); 
+}
 var io = require('socket.io')(serv,{}); 
 var currentGame;
 
@@ -361,13 +386,28 @@ io.sockets.on('connection',function(socket){
     SOCKET_LIST[socket.id] = socket;
     socket.on("SIGN_IN_REQUEST", function(data){
         currentGame.numConnections++;
-        if(data.username =='bob' && data.password == 'test'){
-            Player.onConnect(socket);
-            socket.emit("SIGN_IN_RESPONSE",{success:true});
-        }else{
-            socket.emit("SIGN_IN_RESPONSE",{success:false});
-        }
-    })
+        isValidPassword(data,function(res){
+            if(res){
+                Player.onConnect(socket);
+                socket.emit("SIGN_IN_RESPONSE",{success:true});
+            }else{
+                socket.emit("SIGN_IN_RESPONSE",{success:false});
+            }
+        })
+    });
+
+    //Adding a new user to mock database 
+    socket.on("SIGN_UP_REQUEST",function(data){
+        userExists(data,function(res){
+            if(res){
+                socket.emit("SIGN_UP_RESPONSE",{success:false});
+            }else{
+                addUser(data,function(res){
+                    socket.emit("SIGN_UP_RESPONSE",{success:true});
+                })
+            }
+        });
+    });
 
     //If the game has 2 players, start game
     socket.on("START_GAME",function(){ 
