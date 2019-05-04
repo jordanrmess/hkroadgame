@@ -2,6 +2,12 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
+var MongoClient = require('mongodb').MongoClient;
+
+
+const CONNECTION_URL = "mongodb+srv://jordanrmess:<password>@bunnycrossing-pef6d.mongodb.net/test?retryWrites=true"
+const DATABASE_NAME = "bunnyCrossing";
+
 var timeRemaining; 
 // If query is '/' (nothing)
 app.get('/',function(req,res){
@@ -11,9 +17,22 @@ app.get('/',function(req,res){
 // If query is '/client'. Client can only request things from client folder
 app.use('/client',express.static(__dirname + '/client')); 
 
+// replace the uri string with your connection string.
+var database, collection;
+
+
 // Server starts listening on port 2000
-serv.listen(2000);
-console.log("Server started");
+serv.listen(2000, ()=>{
+    console.log("Server started");
+    MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true }, (error, client) => {
+        if(error) {
+            throw error;
+        }
+        database = client.db(DATABASE_NAME);
+        collection = database.collection("people");
+        console.log("Connected to `" + DATABASE_NAME + "`!");
+    });
+});
 
 // Socket list keeps track of all clients connected to the server. 
 var SOCKET_LIST = {};
