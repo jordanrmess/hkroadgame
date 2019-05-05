@@ -420,17 +420,17 @@ var players_ready=0;
 io.sockets.on('connection',function(socket){
     console.log(currentGame.numConnections);
     if(currentGame.numConnections === maxConnections){
-        //socket.disconnect();
-        //Third person joins, send message to this client that game is full
-        socket.emit("MAX_CONNECTIONS");
+        console.log("max connections");
+        socket.disconnect(true);
+        
     }
+    currentGame.numConnections ++;
 
     // server assigns a unique id to the socket
     socket.id=Math.random();
     // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
     socket.on("SIGN_IN_REQUEST", function(data){
-        currentGame.numConnections++;
         isValidPassword(data,function(res){
             if(res){
                 Player.onConnect(socket);
