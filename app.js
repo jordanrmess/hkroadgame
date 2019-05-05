@@ -4,24 +4,26 @@ var app = express();
 var serv = require('http').Server(app); 
 // var MongoClient = require('mongodb').MongoClient;
 var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
+// var mongoose = require('mongoose');
+var mongojs = require("mongojs");
+var db= mongojs('localhost:27017/userInfo',['user_info']);
 var User = require('./models/User.js');
 
 
 //Connect to database 
 
-var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
-mongoose.connect(uri,{
-    useNewUrlParser: true
-});
+// var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
+// mongoose.connect(uri,{
+//     useNewUrlParser: true
+// });
 
-let db = mongoose.connection;
+// let db = mongoose.connection;
 
-db.on('error', console.error.bind(console, 'connection error:'));
+// db.on('error', console.error.bind(console, 'connection error:'));
 
-db.once('open', function callback() {
-    console.log("db connected");
-});
+// db.once('open', function callback() {
+//     console.log("db connected");
+// });
 
 
 //Setup Express App
@@ -334,30 +336,34 @@ Car.getAllInitPack = function(){
     }
     return cars;
 }
-
-var USERS = {
-    "jordan":"test",
-    "helena":"password"
-}; 
+ 
 
 //Callback functions mock database promises
 var isValidPassword = function(data,cb){
-    setTimeout(function(){
-        cb(USERS[data.username]=== data.password)
-    },10); 
+    db.user_info.find({username:data.username,password:data.password},function(err,res){
+        if(res.length > 0)
+            cb(true);
+        else 
+            cb(false);
+    });
 }
 
 var userExists = function(data,cb){
-    setTimeout(function(){
-        cb(USERS[data.username])
-    },10); 
+
+    db.user_info.find({username:data.username},function(err,res){
+        if(res.length >0){
+            cb(true);
+        }else{
+            cb(false);
+        }
+    });
 }
 
 var addUser = function(data,cb){
-    setTimeout(function(){
-        USERS[data.username] = data.password;
+    db.user_info.insert({username:data.username,password:data.password,score:0},function(err,res){
         cb();
-    },10); 
+    });
+
 }
 var io = require('socket.io')(serv,{}); 
 var currentGame;
