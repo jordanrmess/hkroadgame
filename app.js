@@ -329,7 +329,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:30, 
+        timeRemaining:10, 
         numConnections:0
     }
    
