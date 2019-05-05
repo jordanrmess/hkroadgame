@@ -2,13 +2,36 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
-var MongoClient = require('mongodb').MongoClient;
+// var MongoClient = require('mongodb').MongoClient;
+var bodyParser = require('body-parser');
+var mongoose = require('mongoose');
+var User = require('./models/User.js');
 
 
-const CONNECTION_URL = "mongodb+srv://jordanrmess:<password>@bunnycrossing-pef6d.mongodb.net/test?retryWrites=true"
-const DATABASE_NAME = "bunnyCrossing";
+//Connect to database 
 
-var timeRemaining; 
+var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
+mongoose.connect(uri,{
+    useNewUrlParser: true
+});
+
+let db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'connection error:'));
+
+db.once('open', function callback() {
+    console.log("db connected");
+});
+
+
+//Setup Express App
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
+
+
 // If query is '/' (nothing)
 app.get('/',function(req,res){
     res.sendFile(__dirname + '/client/index.html');
@@ -17,21 +40,24 @@ app.get('/',function(req,res){
 // If query is '/client'. Client can only request things from client folder
 app.use('/client',express.static(__dirname + '/client')); 
 
-// replace the uri string with your connection string.
-var database, collection;
 
+app.post('/api/user', function (req, res) {
+    var user = new User({
+        username: req.body.username,
+        password: req.body.password,
+        max_score: 0
+    });
+
+    user.save(function (err) {
+        if (err) throw err;
+        return res.send('Succesfully added user.');
+    });
+});
 
 // Server starts listening on port 2000
-serv.listen(2000, ()=>{
+app.listen(2000, ()=>{
     console.log("Server started");
-    MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true }, (error, client) => {
-        if(error) {
-            throw error;
-        }
-        database = client.db(DATABASE_NAME);
-        collection = database.collection("people");
-        console.log("Connected to `" + DATABASE_NAME + "`!");
-    });
+    
 });
 
 // Socket list keeps track of all clients connected to the server. 
@@ -247,7 +273,6 @@ var Car = function(x,y, spdY, drivingDown){
                 p.setStartingPosition();
             }
         }
-        //super_update();
     }
     self.getInitPack = function(){
         return{
@@ -286,16 +311,12 @@ Car.onConnect = function(){
     var car5 = Car(525.5, 0, 7, drivingDown);
     var car6 = Car(600.5, 0, 5, drivingDown);
 
-    //var car3 = Car();
-   // console.log("Car list: " + Car.list[car.id]);
 }
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
          var car = Car.list[i]; 
-      //   console.log("car.y BEFORE update ",car.y);
          car.update(); 
-      //   console.log("car.y AFTER update ",car.y);
 
          pack.push({
              id:car.id,
@@ -312,7 +333,6 @@ Car.getAllInitPack = function(){
     for(var i in Car.list){
         cars.push(Car.list[i].getInitPack());
     }
- //   console.log(cars);
     return cars;
 }
 
