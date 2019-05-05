@@ -2,7 +2,38 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
-var timeRemaining; 
+// var MongoClient = require('mongodb').MongoClient;
+var bodyParser = require('body-parser');
+// var mongoose = require('mongoose');
+var mongojs = require("mongojs");
+var db= mongojs('localhost:27017/userInfo',['user_info']);
+var User = require('./models/User.js');
+
+
+//Connect to database 
+
+// var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
+// mongoose.connect(uri,{
+//     useNewUrlParser: true
+// });
+
+// let db = mongoose.connection;
+
+// db.on('error', console.error.bind(console, 'connection error:'));
+
+// db.once('open', function callback() {
+//     console.log("db connected");
+// });
+
+
+//Setup Express App
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
+
+
 // If query is '/' (nothing)
 app.get('/',function(req,res){
     res.sendFile(__dirname + '/client/index.html');
@@ -10,6 +41,20 @@ app.get('/',function(req,res){
 
 // If query is '/client'. Client can only request things from client folder
 app.use('/client',express.static(__dirname + '/client')); 
+
+
+app.post('/api/user', function (req, res) {
+    var user = new User({
+        username: req.body.username,
+        password: req.body.password,
+        max_score: 0
+    });
+
+    user.save(function (err) {
+        if (err) throw err;
+        return res.send('Succesfully added user.');
+    });
+});
 
 // Server starts listening on port 2000
 serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
@@ -229,7 +274,6 @@ var Car = function(x,y, spdY, drivingDown){
                 p.setStartingPosition();
             }
         }
-        //super_update();
     }
     self.getInitPack = function(){
         return{
@@ -268,16 +312,12 @@ Car.onConnect = function(){
     var car5 = Car(525.5, 0, 7, drivingDown);
     var car6 = Car(600.5, 0, 5, drivingDown);
 
-    //var car3 = Car();
-   // console.log("Car list: " + Car.list[car.id]);
 }
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
          var car = Car.list[i]; 
-      //   console.log("car.y BEFORE update ",car.y);
          car.update(); 
-      //   console.log("car.y AFTER update ",car.y);
 
          pack.push({
              id:car.id,
@@ -294,33 +334,36 @@ Car.getAllInitPack = function(){
     for(var i in Car.list){
         cars.push(Car.list[i].getInitPack());
     }
- //   console.log(cars);
     return cars;
 }
-
-var USERS = {
-    "jordan":"test",
-    "helena":"password"
-}; 
+ 
 
 //Callback functions mock database promises
 var isValidPassword = function(data,cb){
-    setTimeout(function(){
-        cb(USERS[data.username]=== data.password)
-    },10); 
+    db.user_info.find({username:data.username,password:data.password},function(err,res){
+        if(res.length > 0)
+            cb(true);
+        else 
+            cb(false);
+    });
 }
 
 var userExists = function(data,cb){
-    setTimeout(function(){
-        cb(USERS[data.username])
-    },10); 
+
+    db.user_info.find({username:data.username},function(err,res){
+        if(res.length >0){
+            cb(true);
+        }else{
+            cb(false);
+        }
+    });
 }
 
 var addUser = function(data,cb){
-    setTimeout(function(){
-        USERS[data.username] = data.password;
+    db.user_info.insert({username:data.username,password:data.password,score:0},function(err,res){
         cb();
-    },10); 
+    });
+
 }
 var io = require('socket.io')(serv,{}); 
 var currentGame;
