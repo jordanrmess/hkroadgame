@@ -12,8 +12,7 @@ app.get('/',function(req,res){
 app.use('/client',express.static(__dirname + '/client')); 
 
 // Server starts listening on port 2000
-serv.listen(2000);
-console.log("Server started");
+serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
 
 // Socket list keeps track of all clients connected to the server. 
 var SOCKET_LIST = {};
