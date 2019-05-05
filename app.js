@@ -169,6 +169,8 @@ Player.onConnect = function(socket){
         car: Car.getAllInitPack(),
         game: currentGame.getInitPack()
     })
+
+    Game.numConnections++;
 }
 
 Player.getAllInitPack = function(){
@@ -329,7 +331,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:10, 
+        timeRemaining:30, 
         numConnections:0
     }
    
@@ -374,6 +376,7 @@ var maxConnections=2;
 var players_ready=0; 
 
 io.sockets.on('connection',function(socket){
+    console.log(currentGame.numConnections);
     if(currentGame.numConnections === maxConnections){
         //socket.disconnect();
         //Third person joins, send message to this client that game is full
@@ -412,7 +415,7 @@ io.sockets.on('connection',function(socket){
     //If the game has 2 players, start game
     socket.on("START_GAME",function(){ 
         players_ready +=1; 
-        console.log(players_ready);
+       // console.log(players_ready);
         if(players_ready ==2){
             io.emit("GAME_STARTED");
             currentGame.startTimer(io); 

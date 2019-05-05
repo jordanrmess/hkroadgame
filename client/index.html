@@ -115,7 +115,7 @@
         var Img = {};
         var timer = 30;
         var game;
-
+        
 
         // Player (bunny) images
         Img.player1 = new Image();
@@ -386,6 +386,7 @@
         });
 
         socket.on("MAX_CONNECTIONS", function () {
+            $("#signIn").hide();
             $("#fullScreen").show();
         });
 
