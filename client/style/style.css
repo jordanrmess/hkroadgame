@@ -26,6 +26,10 @@ body{
     display:none;
 }
 
+#game_over{
+    margin:30px;
+}
+
 #startScreen {
     display:none;
     /* position: fixed; */
