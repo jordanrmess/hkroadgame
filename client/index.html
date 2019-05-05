@@ -115,6 +115,7 @@
         var Img = {};
         var timer = 30;
         var game;
+        var username;
         
 
         // Player (bunny) images
@@ -185,6 +186,8 @@
             if (data.success) {
                 $("#signIn").hide();
                 $("#instructionsScreen").show();
+                username = $("#username").val();
+
 
             } else {
                 alert("Error signing in");
@@ -214,6 +217,7 @@
         var Player = function (initPack) {
             var self = {};
             self.id = initPack.id;
+            self.username=undefined;
             self.number = initPack.number;
             self.x = initPack.x;
             self.y = initPack.y;
@@ -355,6 +359,8 @@
             $("#vid").show();
             $("#endScreen").show();
 
+            var client_score;
+
             //Loop through players and display score
             //Also check who won and display that
             var high_score = 0;
@@ -370,6 +376,9 @@
                 } else if (p.number == 2) {
                     $("#player_2_score").append(p.count);
                 }
+                if(selfId == p.id){
+                    client_score = p.count;
+                }
 
             }
             if(selfId == winner.id){
@@ -379,6 +388,9 @@
                 $("#winner").append("You lose :(");
                 $("#winner").css("-webkit-animation","text-blur-out 3s cubic-bezier(0.550, 0.085, 0.680, 0.530) infinite both");
             }
+
+            socket.emit("NEW_SCORE_REQUEST",{username:username,score:client_score});
+            //NEED TO CHECK FOR TIE SCENARIO
 
             // $("#player_1_score").append(Player.list[0].count);
             // $("#player_2_score").append(Player.list[1].count);

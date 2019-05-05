@@ -373,7 +373,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:30, 
+        timeRemaining:10, 
         numConnections:0
     }
    
@@ -465,6 +465,19 @@ io.sockets.on('connection',function(socket){
             socket.emit("START_RESPONSE", {ready:false}); 
         }
     }); 
+
+    socket.on("NEW_SCORE_REQUEST",function(data){
+        console.log("username: " + data.username + " incoming score: " + data.score);
+
+        var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
+
+        console.log("username: " + data.username + " previous score: " + current_socket_score.score);
+
+        // if(data.score>current_socket_score){
+        //     console.log("new high score for: " + data.username);
+        //     db.user_info.update({username:data.username},{score:data.score});
+        // }
+    });
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
