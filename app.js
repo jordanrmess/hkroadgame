@@ -55,10 +55,7 @@ app.post('/api/user', function (req, res) {
 });
 
 // Server starts listening on port 2000
-app.listen(2000, ()=>{
-    console.log("Server started");
-    
-});
+serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
 
 // Socket list keeps track of all clients connected to the server. 
 var SOCKET_LIST = {};
@@ -214,6 +211,8 @@ Player.onConnect = function(socket){
         car: Car.getAllInitPack(),
         game: currentGame.getInitPack()
     })
+
+    Game.numConnections++;
 }
 
 Player.getAllInitPack = function(){
@@ -413,6 +412,7 @@ var maxConnections=2;
 var players_ready=0; 
 
 io.sockets.on('connection',function(socket){
+    console.log(currentGame.numConnections);
     if(currentGame.numConnections === maxConnections){
         //socket.disconnect();
         //Third person joins, send message to this client that game is full
@@ -451,7 +451,7 @@ io.sockets.on('connection',function(socket){
     //If the game has 2 players, start game
     socket.on("START_GAME",function(){ 
         players_ready +=1; 
-        console.log(players_ready);
+       // console.log(players_ready);
         if(players_ready ==2){
             io.emit("GAME_STARTED");
             currentGame.startTimer(io); 
