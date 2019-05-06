@@ -103,7 +103,12 @@
                 </div>
             </div>
             <div id="leaderboardScreen">
-                Leaderboard goes here
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12"><h1 id="high_score_text">Top 3 Players</h1></div>
+                    </div>
+                    <ol id="ranks"></ol>
+                </div>
             </div>
 
         </div>
@@ -125,8 +130,8 @@
         var Img = {};
         var timer = 30;
         var game;
-        var username,password;
-        
+        var username, password;
+
 
         // Player (bunny) images
         Img.player1 = new Image();
@@ -193,16 +198,25 @@
             })
         });
 
-        $("#leaderboard").click(function(){
+        $("#leaderboard").click(function () {
             socket.emit("CLIENT_LEADERBOARD_REQUEST");
         })
 
-        socket.on('SERVER_LEADERBOARD_RESPONSE',function(result){
-            if(result){
+        socket.on('SERVER_LEADERBOARD_RESPONSE', function (result) {
+            if (result) {
                 $("#endScreen").hide();
                 $("#leaderboardScreen").show();
-                //Append high scores here
-            }else{
+                var list = $('#ranks');
+
+                $.each(result, function (i) {
+                    console.log(result[i]);
+                    var text = '<h3>'+(result[i]).username+": "+ (result[i]).score+'</h3>';
+                    var li = $('<li>'+text+'</li>').appendTo(list);
+                });
+
+                
+                                //Append high scores here
+            } else {
                 alert("leaderboard could not be shown at this time");
             }
         });
@@ -243,7 +257,7 @@
         var Player = function (initPack) {
             var self = {};
             self.id = initPack.id;
-            self.username=undefined;
+            self.username = undefined;
             self.number = initPack.number;
             self.x = initPack.x;
             self.y = initPack.y;
@@ -251,22 +265,26 @@
 
             self.count = initPack.count;
             self.xDeathPos = 0;
-            self.yDeathPos = 0;  
+            self.yDeathPos = 0;
             self.successCoords = initPack.successCoords;
             self.walkingCounter = initPack.walkingCounter;
             self.playerDirection = initPack.playerDirection;
             self.walkingMod = initPack.walkingMod;
 
-            self.draw = function(){
-                var imgHeight = Img.player1.height/4;
-                var imgWidth = Img.player1.width/3;
+            self.draw = function () {
+                var imgHeight = Img.player1.height / 4;
+                var imgWidth = Img.player1.width / 3;
 
-               // console.log("PLAYER DIRECTION: ",self.playerDirection);
-                if(self.number === "1"){
-                    ctx.drawImage(Img.player1, self.walkingMod*imgWidth, self.playerDirection*imgHeight, imgWidth, imgHeight, self.x-imgWidth/2, self.y-imgHeight/2, imgWidth, imgHeight);
+                // console.log("PLAYER DIRECTION: ",self.playerDirection);
+                if (self.number === "1") {
+                    ctx.drawImage(Img.player1, self.walkingMod * imgWidth, self.playerDirection * imgHeight,
+                        imgWidth, imgHeight, self.x - imgWidth / 2, self.y - imgHeight / 2, imgWidth,
+                        imgHeight);
 
-                } else if(self.number === "2"){
-                    ctx.drawImage(Img.player2, self.walkingMod*imgWidth, self.playerDirection*imgHeight, imgWidth, imgHeight, self.x-imgWidth/2, self.y-imgHeight/2, imgWidth, imgHeight);
+                } else if (self.number === "2") {
+                    ctx.drawImage(Img.player2, self.walkingMod * imgWidth, self.playerDirection * imgHeight,
+                        imgWidth, imgHeight, self.x - imgWidth / 2, self.y - imgHeight / 2, imgWidth,
+                        imgHeight);
 
                 }
             }
@@ -341,9 +359,9 @@
                         p.count = pack.count;
                     if (pack.successCoords !== undefined)
                         p.successCoords = pack.successCoords;
-                    if(pack.playerDirection !== undefined)
+                    if (pack.playerDirection !== undefined)
                         p.playerDirection = pack.playerDirection;
-                    if(pack.walkingMod !== undefined)
+                    if (pack.walkingMod !== undefined)
                         p.walkingMod = pack.walkingMod;
                 }
             }
@@ -410,7 +428,7 @@
                 } else if (p.number == 2) {
                     $("#player_2_score").append(p.count);
                 }
-                if(selfId == p.id){
+                if (selfId == p.id) {
                     client_score = p.count;
                 }
 
@@ -430,7 +448,11 @@
                 }
             }
 
-            socket.emit("NEW_SCORE_REQUEST",{username:username,password:password,score:client_score});
+            socket.emit("NEW_SCORE_REQUEST", {
+                username: username,
+                password: password,
+                score: client_score
+            });
             //NEED TO CHECK FOR TIE SCENARIO
 
             // $("#player_1_score").append(Player.list[0].count);
@@ -499,20 +521,22 @@
                 height);
         }
 
-    
-            //    ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-width/2, y-height/2, width/3, height/4);
+
+        //    ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-width/2, y-height/2, width/3, height/4);
         var drawDummyBunny = function (currentPlayer, x, y) {
             if (currentPlayer.number === "1") {
                 var width = Img.player1.width;
                 var height = Img.player1.height;
 
-                ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
+                ctx.drawImage(Img.player1, Img.player1.width / 3, Img.player1.height / 4, Img.player1.width / 3, Img
+                    .player1.height / 4, x - ((width / 3) / 2), y - ((width / 4) / 2), width / 3, height / 4);
 
             } else if (currentPlayer.number === "2") {
                 var width = Img.player2.width;
                 var height = Img.player2.height;
 
-                ctx.drawImage(Img.player2, Img.player2.width/3, Img.player2.height/4, Img.player2.width/3, Img.player2.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
+                ctx.drawImage(Img.player2, Img.player2.width / 3, Img.player2.height / 4, Img.player2.width / 3, Img
+                    .player2.height / 4, x - ((width / 3) / 2), y - ((width / 4) / 2), width / 3, height / 4);
 
 
             }
