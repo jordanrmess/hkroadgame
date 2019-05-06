@@ -6,7 +6,7 @@ var serv = require('http').Server(app);
 var bodyParser = require('body-parser');
 // var mongoose = require('mongoose');
 var mongojs = require("mongojs");
-var db= mongojs('localhost:27017/userInfo',['user_info']);
+var db= mongojs('localhost:27017/users',['users']);
 var User = require('./models/User.js');
 
 
@@ -171,8 +171,6 @@ var Player = function(id) {
         else{
             self.spdY=0;
         }
-        //self.walkingMod ++;
-        console.log("WALKING MOD: ", self.walkingMod);
     }
     
     self.getInitPack = function(){
@@ -242,7 +240,7 @@ Player.onConnect = function(socket){
         car: Car.getAllInitPack(),
         game: currentGame.getInitPack()
     })
-
+    
     Game.numConnections++;
 }
 
@@ -320,11 +318,8 @@ var Car = function(x,y, spdY, drivingDown){
         }
     }
 
-
-
     Car.list[self.id] = self;    
     initPack.car.push(self.getInitPack());
-
     return self; 
 
 }
@@ -371,7 +366,7 @@ Car.getAllInitPack = function(){
 
 //Callback functions mock database promises
 var isValidPassword = function(data,cb){
-    db.user_info.find({username:data.username,password:data.password},function(err,res){
+    db.users.find({username:data.username,password:data.password},function(err,res){
         if(res.length > 0)
             cb(true);
         else 
@@ -381,7 +376,7 @@ var isValidPassword = function(data,cb){
 
 var userExists = function(data,cb){
 
-    db.user_info.find({username:data.username},function(err,res){
+    db.users.find({username:data.username},function(err,res){
         if(res.length >0){
             cb(true);
         }else{
@@ -391,7 +386,7 @@ var userExists = function(data,cb){
 }
 
 var addUser = function(data,cb){
-    db.user_info.insert({username:data.username,password:data.password,score:0},function(err,res){
+    db.users.insert({username:data.username,password:data.password,score:0},function(err,res){
         cb();
     });
 
@@ -400,7 +395,7 @@ var addUser = function(data,cb){
 var getTopPlayers = function(cb){
     var all_scores = [];
     var top_scores = []; 
-    var query = db.user_info.find(function(err,res){
+    var query = db.users.find(function(err,res){
          res.toArray(function (err, docs) {
             if(err){console.log("error accessing record" + err);}
             docs.forEach(function (doc) {
@@ -460,16 +455,19 @@ Game.init = function(){
     currentGame = Game();
 }
 
+//Game cannot have more than 2 players
 
-//Game cannot have more than 2 players 
 var maxConnections=2;
 var players_ready=0; 
 
+//.maxConnections = 2;
+
 io.sockets.on('connection',function(socket){
-    console.log(currentGame.numConnections);
-    if(currentGame.numConnections === maxConnections){
+   console.log("established a");
+   if(currentGame.numConnections === maxConnections){
         console.log("max connections");
         socket.disconnect(true);
+        console.log("disconnect socket. number of connections are %s", currentgame.numConnections);
         
     }
     currentGame.numConnections ++;
@@ -518,7 +516,7 @@ io.sockets.on('connection',function(socket){
         // console.log("username: " + data.username + " incoming score: " + data.score);
         var current_socket_score=0;
         // var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
-        var query = db.user_info.find({username:data.username});
+        var query = db.users.find({username:data.username});
         query.toArray(function (err, docs) {
             if(err){console.log("error accessing record" + err);}
             docs.forEach(function (doc) {
@@ -527,7 +525,7 @@ io.sockets.on('connection',function(socket){
             });
               //if client has a new score
             if(data.score>current_socket_score){
-                db.user_info.update({username:data.username},{username: data.username,password:data.password,score:data.score});
+                db.users.update({username:data.username},{username: data.username,password:data.password,score:data.score});
                 console.log("new high score for: " + data.username+ " of "  + data.score);
             }
             });
@@ -537,10 +535,12 @@ io.sockets.on('connection',function(socket){
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
         delete SOCKET_LIST[socket.id]; 
+        console.log("socket",socket.id);   
         Player.onDisconnect(socket);
         currentGame.numConnections--;
     });
 });
+
 
 
 
