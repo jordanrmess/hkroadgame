@@ -200,3 +200,7 @@ body {
     opacity: 1;
   }
 }
+
+#leaderboardScreen{
+  display:none;
+}
