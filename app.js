@@ -366,6 +366,22 @@ var addUser = function(data,cb){
 
 }
 
+var getTopPlayers = function(cb){
+    var all_scores = [];
+    var top_scores = []; 
+    var query = db.user_info.find(function(err,res){
+         res.toArray(function (err, docs) {
+            if(err){console.log("error accessing record" + err);}
+            docs.forEach(function (doc) {
+               all_scores.push({username:doc.username,score:doc.score});
+            });
+            top_scores = all_scores.sort((a,b) => a.score>b.score).slice(0,3);
+            cb(top_scores);
+     });
+     
+    })
+}
+
 var io = require('socket.io')(serv,{}); 
 var currentGame;
 
@@ -484,8 +500,7 @@ io.sockets.on('connection',function(socket){
                 console.log("new high score for: " + data.username+ " of "  + data.score);
             }
             });
-        
-      
+
     });
 
     // Server listens to disconnects, and removes disconnected clients.
@@ -495,6 +510,8 @@ io.sockets.on('connection',function(socket){
         currentGame.numConnections--;
     });
 });
+
+
 
 
 

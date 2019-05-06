@@ -95,7 +95,15 @@
                             <h2 id="winner"></h2>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <button id="leaderboard">View leaderboard</button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div id="leaderboardScreen">
+                Leaderboard goes here
             </div>
 
         </div>
@@ -183,6 +191,19 @@
             })
         });
 
+        $("#leaderboard").click(function(){
+            socket.emit("CLIENT_LEADERBOARD_REQUEST");
+        })
+
+        socket.on('SERVER_LEADERBOARD_RESPONSE',function(result){
+            if(result){
+                $("#endScreen").hide();
+                $("#leaderboardScreen").show();
+                //Append high scores here
+            }else{
+                alert("leaderboard could not be shown at this time");
+            }
+        });
 
         socket.on('SIGN_IN_RESPONSE', function (data) {
             if (data.success) {
