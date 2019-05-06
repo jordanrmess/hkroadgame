@@ -1,0 +1,17 @@
+{
+    "mickey": {
+        "firstname": "Mickey",
+        "lastname": "Mouse",
+        "password": "xxxx"
+    },
+    "donald": {
+        "firstname": "Donald",
+        "lastname": "Duck",
+        "password": "1234"
+    },
+    "winnie": {
+        "firstname": "Winnie",
+        "lastname": "Pooh",
+        "password": "0000"
+    }
+}

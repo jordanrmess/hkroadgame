@@ -549,7 +549,6 @@ io.sockets.on('connection',function(socket){
     console.log("current connections: %s", currentGame.numConnections);
 });
 
-
 var initPack = {player:[],car:[],game:[]};
 var removePack = {player:[],game:[]};
 
@@ -580,6 +579,5 @@ setInterval(function(){
     initPack.car = []; 
     initPack.game = []; 
     removePack.player = [];
-
 
 },1000/25);
