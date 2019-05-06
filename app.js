@@ -2,6 +2,37 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
+// var MongoClient = require('mongodb').MongoClient;
+var bodyParser = require('body-parser');
+// var mongoose = require('mongoose');
+var mongojs = require("mongojs");
+var db= mongojs('localhost:27017/userInfo',['user_info']);
+var User = require('./models/User.js');
+
+
+//Connect to database 
+
+// var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
+// mongoose.connect(uri,{
+//     useNewUrlParser: true
+// });
+
+// let db = mongoose.connection;
+
+// db.on('error', console.error.bind(console, 'connection error:'));
+
+// db.once('open', function callback() {
+//     console.log("db connected");
+// });
+
+
+//Setup Express App
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
+
 
 // If query is '/' (nothing)
 app.get('/',function(req,res){
@@ -11,9 +42,22 @@ app.get('/',function(req,res){
 // If query is '/client'. Client can only request things from client folder
 app.use('/client',express.static(__dirname + '/client')); 
 
+
+app.post('/api/user', function (req, res) {
+    var user = new User({
+        username: req.body.username,
+        password: req.body.password,
+        max_score: 0
+    });
+
+    user.save(function (err) {
+        if (err) throw err;
+        return res.send('Succesfully added user.');
+    });
+});
+
 // Server starts listening on port 2000
-serv.listen(2000);
-console.log("Server started");
+serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
 
 // Socket list keeps track of all clients connected to the server. 
 var SOCKET_LIST = {};
@@ -40,6 +84,7 @@ var Entity = function(){
     }
     return self;
 }
+
 
 // Create a player, passes id as parameter
 var Player = function(id) {
@@ -194,8 +239,11 @@ Player.onConnect = function(socket){
         // Server tells client "hey, you have this socket id"
         selfId:socket.id,
         player:Player.getAllInitPack(),
-        car: Car.getAllInitPack()
+        car: Car.getAllInitPack(),
+        game: currentGame.getInitPack()
     })
+
+    Game.numConnections++;
 }
 
 Player.getAllInitPack = function(){
@@ -255,7 +303,6 @@ var Car = function(x,y, spdY, drivingDown){
                 p.setStartingPosition();
             }
         }
-        //super_update();
     }
     self.getInitPack = function(){
         return{
@@ -296,17 +343,12 @@ Car.onConnect = function(){
     var car5 = Car(525.5, 0, 7, drivingDown);
     var car6 = Car(600.5, 0, 5, drivingDown);
 
-    //var car3 = Car();
-   // console.log("Car list: " + Car.list[car.id]);
 }
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
          var car = Car.list[i]; 
-      //   console.log("car.y BEFORE update ",car.y);
          car.update(); 
-      //   console.log("car.y AFTER update ",car.y);
-
 
          pack.push({
              id:car.id,
@@ -323,38 +365,191 @@ Car.getAllInitPack = function(){
     for(var i in Car.list){
         cars.push(Car.list[i].getInitPack());
     }
- //   console.log(cars);
     return cars;
 }
+ 
 
-// Initializes an io Socket object 
+//Callback functions mock database promises
+var isValidPassword = function(data,cb){
+    db.user_info.find({username:data.username,password:data.password},function(err,res){
+        if(res.length > 0)
+            cb(true);
+        else 
+            cb(false);
+    });
+}
+
+var userExists = function(data,cb){
+
+    db.user_info.find({username:data.username},function(err,res){
+        if(res.length >0){
+            cb(true);
+        }else{
+            cb(false);
+        }
+    });
+}
+
+var addUser = function(data,cb){
+    db.user_info.insert({username:data.username,password:data.password,score:0},function(err,res){
+        cb();
+    });
+
+}
+
+var getTopPlayers = function(cb){
+    var all_scores = [];
+    var top_scores = []; 
+    var query = db.user_info.find(function(err,res){
+         res.toArray(function (err, docs) {
+            if(err){console.log("error accessing record" + err);}
+            docs.forEach(function (doc) {
+               all_scores.push({username:doc.username,score:doc.score});
+            });
+            top_scores = all_scores.sort((a,b) => a.score>b.score).slice(0,3);
+            cb(top_scores);
+     });
+     
+    })
+}
 
 var io = require('socket.io')(serv,{}); 
-var maxConnections=2;
-var currentConnections=0;
-// var car = Car();
-io.sockets.on('connection',function(socket){
-    // server assigns a unique id to the socket
-    if(currentConnections === maxConnections){
-        socket.disconnect();
+var currentGame;
+
+//Game object stores important information about the current game
+var Game = function(){
+
+    //Time starts at 30 seconds
+    var self = {
+        timeRemaining:30, 
+        numConnections:0
+    }
+   
+
+    self.startTimer = function() {
+        if(self.timeRemaining > 0){
+            self.timeRemaining-=1; 
+            setTimeout(self.startTimer,1000)
+        }else{
+            //Time has run out, alert the clients
+            io.emit("GAME_OVER",Player.update()); 
+        }
+        
     }
 
+    self.getInitPack = function(){
+        return {
+            timeRemaining: self.timeRemaining,
+            numConnections: self.numConnections
+        }
+    }
+
+    self.getUpdatePack = function() {
+        return{
+            timeRemaining: self.timeRemaining,
+            numConnections: self.numConnections
+        }
+    }
+
+    initPack.game = (self.getInitPack()); 
+    return self; 
+}
+
+//Creating game object
+Game.init = function(){
+    currentGame = Game();
+}
+
+
+//Game cannot have more than 2 players 
+var maxConnections=2;
+var players_ready=0; 
+
+io.sockets.on('connection',function(socket){
+    console.log(currentGame.numConnections);
+    if(currentGame.numConnections === maxConnections){
+        console.log("max connections");
+        socket.disconnect(true);
+        
+    }
+    currentGame.numConnections ++;
+
+    // server assigns a unique id to the socket
     socket.id=Math.random();
     // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
-    Player.onConnect(socket);
-    currentConnections++;
-    
+    socket.on("SIGN_IN_REQUEST", function(data){
+        isValidPassword(data,function(res){
+            if(res){
+                Player.onConnect(socket);
+                socket.emit("SIGN_IN_RESPONSE",{success:true});
+            }else{
+                socket.emit("SIGN_IN_RESPONSE",{success:false});
+            }
+        })
+    });
+
+    //Adding a new user to mock database 
+    socket.on("SIGN_UP_REQUEST",function(data){
+        userExists(data,function(res){
+            if(res){
+                socket.emit("SIGN_UP_RESPONSE",{success:false});
+            }else{
+                addUser(data,function(res){
+                    socket.emit("SIGN_UP_RESPONSE",{success:true});
+                })
+            }
+        });
+    });
+
+    //If the game has 2 players, start game
+    socket.on("START_GAME",function(){ 
+        players_ready +=1; 
+       // console.log(players_ready);
+        if(players_ready ==2){
+            io.emit("GAME_STARTED");
+            currentGame.startTimer(io); 
+        }else{
+            socket.emit("START_RESPONSE", {ready:false}); 
+        }
+    }); 
+
+    socket.on("NEW_SCORE_REQUEST",function(data){
+        // console.log("username: " + data.username + " incoming score: " + data.score);
+        var current_socket_score=0;
+        // var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
+        var query = db.user_info.find({username:data.username});
+        query.toArray(function (err, docs) {
+            if(err){console.log("error accessing record" + err);}
+            docs.forEach(function (doc) {
+                current_socket_score = doc.score;
+                console.log("past score for " + data.username + " is " + current_socket_score); 
+            });
+              //if client has a new score
+            if(data.score>current_socket_score){
+                db.user_info.update({username:data.username},{username: data.username,password:data.password,score:data.score});
+                console.log("new high score for: " + data.username+ " of "  + data.score);
+            }
+            });
+
+    });
+
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
         delete SOCKET_LIST[socket.id]; 
         Player.onDisconnect(socket);
-        currentConnections--;
+        currentGame.numConnections--;
     });
 });
 
-var initPack = {player:[],car:[]};
-var removePack = {player:[]};
+
+
+
+
+
+
+var initPack = {player:[],car:[],game:[]};
+var removePack = {player:[],game:[]};
 
 var initializeServer = true;
 
@@ -362,12 +557,15 @@ var initializeServer = true;
 setInterval(function(){
     // pack contains information about every single player in the game, and will be sent to every player conncted
     if(initializeServer){
+        //Init Game object 
+        Game.init();
         Car.onConnect(); 
         initializeServer = false;
     }
     var pack = {
         player:Player.update(),
-        car:Car.update()
+        car:Car.update(),
+        game:currentGame.getUpdatePack()
     }
     // Server emits the pack to each  connected client
     for(var i in SOCKET_LIST){
@@ -378,6 +576,7 @@ setInterval(function(){
     }
     initPack.player = [];
     initPack.car = []; 
+    initPack.game = []; 
     removePack.player = [];
 
 
