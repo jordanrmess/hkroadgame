@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 // var mongoose = require('mongoose');
 var mongojs = require("mongojs");
 var db= mongojs('localhost:27017/users',['users']);
-var User = require('./models/User.js');
+
 
 
 //Connect to database 
@@ -102,7 +102,7 @@ var Player = function(id) {
     self.playerDirection = PLAYER_DIRECTIONS["right"];
     self.walkingMod = self.walkingCounter%3;
     self.alive = true;
-    self.maxSpd = 5;
+    self.maxSpd = 10;
     self.count = 0;
 
     // Check which player, and give different spawning points
@@ -395,6 +395,7 @@ var addUser = function(data,cb){
 var getTopPlayers = function(cb){
     var all_scores = [];
     var top_scores = []; 
+<<<<<<< HEAD
     var query = db.users.find(function(err,res){
          res.toArray(function (err, docs) {
             if(err){console.log("error accessing record" + err);}
@@ -403,9 +404,19 @@ var getTopPlayers = function(cb){
             });
             top_scores = all_scores.sort((a,b) => a.score>b.score).slice(0,3);
             cb(top_scores);
+=======
+    db.user_info.find(function(err,res){
+
+        console.log(res);
+        res.forEach(function (user) {
+            all_scores.push({username:user.username,score:user.score});
+        });
+        top_scores = all_scores.sort((a,b) => a.score<b.score).slice(0,3);
+        cb(top_scores);
+
      });
      
-    })
+    
 }
 
 var io = require('socket.io')(serv,{}); 
@@ -416,7 +427,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:30, 
+        timeRemaining:5, 
         numConnections:0
     }
    
@@ -521,7 +532,6 @@ io.sockets.on('connection',function(socket){
             if(err){console.log("error accessing record" + err);}
             docs.forEach(function (doc) {
                 current_socket_score = doc.score;
-                console.log("past score for " + data.username + " is " + current_socket_score); 
             });
               //if client has a new score
             if(data.score>current_socket_score){
@@ -531,6 +541,12 @@ io.sockets.on('connection',function(socket){
             });
 
     });
+
+    socket.on("CLIENT_LEADERBOARD_REQUEST",function(){
+        getTopPlayers(function(res){
+            socket.emit("SERVER_LEADERBOARD_RESPONSE",res);
+        });
+    })
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){

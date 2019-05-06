@@ -72,7 +72,7 @@ body {
 
 #vid {
   position: fixed;
-
+  z-index: -1;
   width: 725px;
   height: 408px;
   filter: opacity(60%);
@@ -203,4 +203,9 @@ body {
 
 #leaderboardScreen{
   display:none;
+
 }
+#high_score_text{
+  -webkit-animation: bounce 0.75s infinite;
+}
+

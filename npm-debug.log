@@ -7,7 +7,7 @@
 6 silly lifecycle hkroadgame@1.0.0~prestart: no script for prestart, continuing
 7 info lifecycle hkroadgame@1.0.0~start: hkroadgame@1.0.0
 8 verbose lifecycle hkroadgame@1.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle hkroadgame@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/jordanmess/hkroadgame/node_modules/.bin:/Users/jordanmess/.cargo/bin:/Users/jordanmess/.opam/4.04.0/bin:/Users/jordanmess/.cargo/bin:/Users/jordanmess/.rvm/gems/ruby-2.4.0/bin:/Users/jordanmess/.rvm/gems/ruby-2.4.0@global/bin:/Users/jordanmess/.rvm/rubies/ruby-2.4.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Users/jordanmess/.rvm/bin
+9 verbose lifecycle hkroadgame@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/jordanmess/hkroadgame/node_modules/.bin:/Users/jordanmess/.cargo/bin:/Users/jordanmess/.opam/4.04.0/bin:/Users/jordanmess/.cargo/bin:/Users/jordanmess/.rvm/gems/ruby-2.4.0/bin:/Users/jordanmess/.rvm/gems/ruby-2.4.0@global/bin:/Users/jordanmess/.rvm/rubies/ruby-2.4.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:/opt/X11/bin:~/.dotnet/tools:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Users/jordanmess/.rvm/bin
 10 verbose lifecycle hkroadgame@1.0.0~start: CWD: /Users/jordanmess/hkroadgame
 11 silly lifecycle hkroadgame@1.0.0~start: Args: [ '-c', 'node app.js' ]
 12 silly lifecycle hkroadgame@1.0.0~start: Returned: code: 1  signal: null
