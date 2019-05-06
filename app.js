@@ -9,31 +9,6 @@ var mongojs = require("mongojs");
 var db= mongojs('localhost:27017/users',['users']);
 
 
-
-//Connect to database 
-
-// var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
-// mongoose.connect(uri,{
-//     useNewUrlParser: true
-// });
-
-// let db = mongoose.connection;
-
-// db.on('error', console.error.bind(console, 'connection error:'));
-
-// db.once('open', function callback() {
-//     console.log("db connected");
-// });
-
-
-//Setup Express App
-
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({
-//     extended: false
-// }));
-
-
 // If query is '/' (nothing)
 app.get('/',function(req,res){
     res.sendFile(__dirname + '/client/index.html');
@@ -63,6 +38,7 @@ serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
 var SOCKET_LIST = {};
 var PLAYER_DIRECTIONS = {"up":3,"down":0,"right":2,"left":1};
 var AVAILABLE_PLAYERS = [1,2];
+var SOCKET_ID_TO_NUMBER = {};
 
 var Entity = function(){
     var self = {
@@ -106,7 +82,6 @@ var Player = function(id) {
     self.count = 0;
 
     // Check which player, and give different spawning points
-
     self.setStartingPosition = function(){
        // self.alive = true;
         if(self.number === "1"){
@@ -219,6 +194,7 @@ Player.list = {};
 Player.onConnect = function(socket){
     
     var player = Player(socket.id);
+    SOCKET_ID_TO_NUMBER[socket.id] = player.number;
 
     // Listens to client key presses, updates states of client accordingly
     socket.on('keyPress',function(data){
@@ -533,20 +509,15 @@ io.sockets.on('connection',function(socket){
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
-        console.log("socket ", socket.id, " with number" , Player.list[socket.id],"disconnected");   
-        console.log("AVAILABLE_PLAYERS before", AVAILABLE_PLAYERS);
-        AVAILABLE_PLAYERS.push(Player.list[socket.id].number);
+        AVAILABLE_PLAYERS.push(SOCKET_ID_TO_NUMBER[socket.id]);
         AVAILABLE_PLAYERS.sort();
-        console.log("AVAILABLE_PLAYERS after", AVAILABLE_PLAYERS);
 
         delete SOCKET_LIST[socket.id]; 
         Player.onDisconnect(socket);
         currentGame.numConnections--;
         
-
     });
-
-    console.log("current connections: %s", currentGame.numConnections);
+    //console.log("current connections: %s", currentGame.numConnections);
 });
 
 var initPack = {player:[],car:[],game:[]};
@@ -575,6 +546,7 @@ setInterval(function(){
         socket.emit("update",pack);
         socket.emit("remove", removePack);
     }
+
     initPack.player = [];
     initPack.car = []; 
     initPack.game = []; 
