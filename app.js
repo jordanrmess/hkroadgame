@@ -6,7 +6,8 @@ var serv = require('http').Server(app);
 var bodyParser = require('body-parser');
 // var mongoose = require('mongoose');
 var mongojs = require("mongojs");
-var db= mongojs('localhost:27017/userInfo',['user_info']);
+var db= mongojs('localhost:27017/users',['users']);
+
 
 
 //Connect to database 
@@ -170,8 +171,6 @@ var Player = function(id) {
         else{
             self.spdY=0;
         }
-        // //self.walkingMod ++;
-        // console.log("WALKING MOD: ", self.walkingMod);
     }
     
     self.getInitPack = function(){
@@ -241,7 +240,7 @@ Player.onConnect = function(socket){
         car: Car.getAllInitPack(),
         game: currentGame.getInitPack()
     })
-
+    
     Game.numConnections++;
 }
 
@@ -256,6 +255,7 @@ Player.getAllInitPack = function(){
 Player.onDisconnect = function(socket){
     delete Player.list[socket.id];
     removePack.player.push(socket.id);
+
 }
 
 Player.update = function(){
@@ -319,11 +319,8 @@ var Car = function(x,y, spdY, drivingDown){
         }
     }
 
-
-
     Car.list[self.id] = self;    
     initPack.car.push(self.getInitPack());
-
     return self; 
 
 }
@@ -370,7 +367,7 @@ Car.getAllInitPack = function(){
 
 //Callback functions mock database promises
 var isValidPassword = function(data,cb){
-    db.user_info.find({username:data.username,password:data.password},function(err,res){
+    db.users.find({username:data.username,password:data.password},function(err,res){
         if(res.length > 0)
             cb(true);
         else 
@@ -380,7 +377,7 @@ var isValidPassword = function(data,cb){
 
 var userExists = function(data,cb){
 
-    db.user_info.find({username:data.username},function(err,res){
+    db.users.find({username:data.username},function(err,res){
         if(res.length >0){
             cb(true);
         }else{
@@ -390,7 +387,7 @@ var userExists = function(data,cb){
 }
 
 var addUser = function(data,cb){
-    db.user_info.insert({username:data.username,password:data.password,score:0},function(err,res){
+    db.users.insert({username:data.username,password:data.password,score:0},function(err,res){
         cb();
     });
 
@@ -399,7 +396,7 @@ var addUser = function(data,cb){
 var getTopPlayers = function(cb){
     var all_scores = [];
     var top_scores = []; 
-    db.user_info.find(function(err,res){
+    db.users.find(function(err,res){
 
         console.log(res);
         res.forEach(function (user) {
@@ -408,17 +405,9 @@ var getTopPlayers = function(cb){
         top_scores = all_scores.sort((a,b) => a.score<b.score).slice(0,3);
         cb(top_scores);
 
-        //  res.toArray(function (err, docs) {
-        //     if(err){console.log("error accessing record" + err);}
-        //     docs.forEach(function (doc) {
-        //        all_scores.push({username:doc.username,score:doc.score});
-        //     });
-        //     top_scores = all_scores.sort((a,b) => a.score>b.score).slice(0,3);
-        //     cb(top_scores);
      });
-     
-    
 }
+    
 
 var io = require('socket.io')(serv,{}); 
 var currentGame;
@@ -468,23 +457,22 @@ Game.init = function(){
 }
 
 
-//Game cannot have more than 2 players 
 var maxConnections=2;
 var players_ready=0; 
 
 io.sockets.on('connection',function(socket){
-    console.log(currentGame.numConnections);
-    if(currentGame.numConnections === maxConnections){
+   console.log("client %s connected", socket.id);
+   if(currentGame.numConnections === maxConnections){
         console.log("max connections");
         socket.disconnect(true);
-        
+        console.log("disconnect socket. number of connections are %s", currentgame.numConnections);
     }
     currentGame.numConnections ++;
 
     // server assigns a unique id to the socket
     socket.id=Math.random();
-    // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
+
     socket.on("SIGN_IN_REQUEST", function(data){
         isValidPassword(data,function(res){
             if(res){
@@ -522,10 +510,8 @@ io.sockets.on('connection',function(socket){
     }); 
 
     socket.on("NEW_SCORE_REQUEST",function(data){
-        // console.log("username: " + data.username + " incoming score: " + data.score);
         var current_socket_score=0;
-        // var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
-        var query = db.user_info.find({username:data.username});
+        var query = db.users.find({username:data.username});
         query.toArray(function (err, docs) {
             if(err){console.log("error accessing record" + err);}
             docs.forEach(function (doc) {
@@ -533,10 +519,10 @@ io.sockets.on('connection',function(socket){
             });
               //if client has a new score
             if(data.score>current_socket_score){
-                db.user_info.update({username:data.username},{username: data.username,password:data.password,score:data.score});
+                db.users.update({username:data.username},{username: data.username,password:data.password,score:data.score});
+                console.log("new high score for: " + data.username+ " of "  + data.score);
             }
             });
-
     });
 
     socket.on("CLIENT_LEADERBOARD_REQUEST",function(){
@@ -547,16 +533,21 @@ io.sockets.on('connection',function(socket){
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
+        console.log("socket ", socket.id, " with number" , Player.list[socket.id],"disconnected");   
+        console.log("AVAILABLE_PLAYERS before", AVAILABLE_PLAYERS);
+        AVAILABLE_PLAYERS.push(Player.list[socket.id].number);
+        AVAILABLE_PLAYERS.sort();
+        console.log("AVAILABLE_PLAYERS after", AVAILABLE_PLAYERS);
+
         delete SOCKET_LIST[socket.id]; 
         Player.onDisconnect(socket);
         currentGame.numConnections--;
+        
+
     });
+
+    console.log("current connections: %s", currentGame.numConnections);
 });
-
-
-
-
-
 
 
 var initPack = {player:[],car:[],game:[]};
