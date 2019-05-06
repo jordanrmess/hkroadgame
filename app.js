@@ -28,10 +28,10 @@ var User = require('./models/User.js');
 
 //Setup Express App
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({
-    extended: false
-}));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({
+//     extended: false
+// }));
 
 
 // If query is '/' (nothing)
