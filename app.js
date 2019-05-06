@@ -365,6 +365,7 @@ var addUser = function(data,cb){
     });
 
 }
+
 var io = require('socket.io')(serv,{}); 
 var currentGame;
 
@@ -373,7 +374,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:10, 
+        timeRemaining:30, 
         numConnections:0
     }
    
@@ -467,16 +468,24 @@ io.sockets.on('connection',function(socket){
     }); 
 
     socket.on("NEW_SCORE_REQUEST",function(data){
-        console.log("username: " + data.username + " incoming score: " + data.score);
-
-        var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
-
-        console.log("username: " + data.username + " previous score: " + current_socket_score.score);
-
-        // if(data.score>current_socket_score){
-        //     console.log("new high score for: " + data.username);
-        //     db.user_info.update({username:data.username},{score:data.score});
-        // }
+        // console.log("username: " + data.username + " incoming score: " + data.score);
+        var current_socket_score=0;
+        // var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
+        var query = db.user_info.find({username:data.username});
+        query.toArray(function (err, docs) {
+            if(err){console.log("error accessing record" + err);}
+            docs.forEach(function (doc) {
+                current_socket_score = doc.score;
+                console.log("past score for " + data.username + " is " + current_socket_score); 
+            });
+              //if client has a new score
+            if(data.score>current_socket_score){
+                db.user_info.update({username:data.username},{username: data.username,password:data.password,score:data.score});
+                console.log("new high score for: " + data.username+ " of "  + data.score);
+            }
+            });
+        
+      
     });
 
     // Server listens to disconnects, and removes disconnected clients.

@@ -117,7 +117,7 @@
         var Img = {};
         var timer = 30;
         var game;
-        var username;
+        var username,password;
         
 
         // Player (bunny) images
@@ -189,6 +189,7 @@
                 $("#signIn").hide();
                 $("#instructionsScreen").show();
                 username = $("#username").val();
+                password = $("#password").val();
 
 
             } else {
@@ -400,7 +401,7 @@
                 }
             }
 
-            socket.emit("NEW_SCORE_REQUEST",{username:username,score:client_score});
+            socket.emit("NEW_SCORE_REQUEST",{username:username,password:password,score:client_score});
             //NEED TO CHECK FOR TIE SCENARIO
 
             // $("#player_1_score").append(Player.list[0].count);
