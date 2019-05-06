@@ -255,6 +255,7 @@ Player.getAllInitPack = function(){
 Player.onDisconnect = function(socket){
     delete Player.list[socket.id];
     removePack.player.push(socket.id);
+
 }
 
 Player.update = function(){
@@ -395,7 +396,7 @@ var addUser = function(data,cb){
 var getTopPlayers = function(cb){
     var all_scores = [];
     var top_scores = []; 
-    db.user_info.find(function(err,res){
+    db.users.find(function(err,res){
 
         console.log(res);
         res.forEach(function (user) {
@@ -455,27 +456,23 @@ Game.init = function(){
     currentGame = Game();
 }
 
-//Game cannot have more than 2 players
 
 var maxConnections=2;
 var players_ready=0; 
 
-//.maxConnections = 2;
-
 io.sockets.on('connection',function(socket){
-   console.log("established a");
+   console.log("client %s connected", socket.id);
    if(currentGame.numConnections === maxConnections){
         console.log("max connections");
         socket.disconnect(true);
         console.log("disconnect socket. number of connections are %s", currentgame.numConnections);
-        
     }
     currentGame.numConnections ++;
 
     // server assigns a unique id to the socket
     socket.id=Math.random();
-    // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
+
     socket.on("SIGN_IN_REQUEST", function(data){
         isValidPassword(data,function(res){
             if(res){
@@ -513,9 +510,7 @@ io.sockets.on('connection',function(socket){
     }); 
 
     socket.on("NEW_SCORE_REQUEST",function(data){
-        // console.log("username: " + data.username + " incoming score: " + data.score);
         var current_socket_score=0;
-        // var current_socket_score = JSON.parse(JSON.stringify(db.user_info.find({username:data.username},{score:1})));
         var query = db.users.find({username:data.username});
         query.toArray(function (err, docs) {
             if(err){console.log("error accessing record" + err);}
@@ -528,7 +523,6 @@ io.sockets.on('connection',function(socket){
                 console.log("new high score for: " + data.username+ " of "  + data.score);
             }
             });
-
     });
 
     socket.on("CLIENT_LEADERBOARD_REQUEST",function(){
@@ -539,18 +533,21 @@ io.sockets.on('connection',function(socket){
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
+        console.log("socket ", socket.id, " with number" , Player.list[socket.id],"disconnected");   
+        console.log("AVAILABLE_PLAYERS before", AVAILABLE_PLAYERS);
+        AVAILABLE_PLAYERS.push(Player.list[socket.id].number);
+        AVAILABLE_PLAYERS.sort();
+        console.log("AVAILABLE_PLAYERS after", AVAILABLE_PLAYERS);
+
         delete SOCKET_LIST[socket.id]; 
-        console.log("socket",socket.id);   
         Player.onDisconnect(socket);
         currentGame.numConnections--;
+        
+
     });
+
+    console.log("current connections: %s", currentGame.numConnections);
 });
-
-
-
-
-
-
 
 
 var initPack = {player:[],car:[],game:[]};
