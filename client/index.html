@@ -171,6 +171,8 @@
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font = "30px Arial";
 
+        // Player variables
+
         // Initializes a connection between the client and the server.
         var socket = io();
 
@@ -246,24 +248,25 @@
             self.x = initPack.x;
             self.y = initPack.y;
             self.alive = initPack.alive;
+
             self.count = initPack.count;
             self.xDeathPos = 0;
-            self.yDeathPos = 0;
+            self.yDeathPos = 0;  
             self.successCoords = initPack.successCoords;
-            self.draw = function () {
-                if (self.number === "1") {
-                    var width = Img.player1.width;
-                    var height = Img.player1.height;
+            self.walkingCounter = initPack.walkingCounter;
+            self.playerDirection = initPack.playerDirection;
+            self.walkingMod = initPack.walkingMod;
 
-                    ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, self.x - width / 2,
-                        self.y - height / 2, width, height);
+            self.draw = function(){
+                var imgHeight = Img.player1.height/4;
+                var imgWidth = Img.player1.width/3;
 
-                } else if (self.number === "2") {
-                    var width = Img.player2.width;
-                    var height = Img.player2.height;
+               // console.log("PLAYER DIRECTION: ",self.playerDirection);
+                if(self.number === "1"){
+                    ctx.drawImage(Img.player1, self.walkingMod*imgWidth, self.playerDirection*imgHeight, imgWidth, imgHeight, self.x-imgWidth/2, self.y-imgHeight/2, imgWidth, imgHeight);
 
-                    ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, self.x - width / 2,
-                        self.y - height / 2, width, height);
+                } else if(self.number === "2"){
+                    ctx.drawImage(Img.player2, self.walkingMod*imgWidth, self.playerDirection*imgHeight, imgWidth, imgHeight, self.x-imgWidth/2, self.y-imgHeight/2, imgWidth, imgHeight);
 
                 }
             }
@@ -305,6 +308,7 @@
             }
             for (var i = 0; i < data.player.length; i++) {
                 new Player(data.player[i]);
+                console.log(data.player[i].playerDirection)
             }
             for (var i in data.car) {
                 new Car(data.car[i], carImages[i]);
@@ -337,6 +341,10 @@
                         p.count = pack.count;
                     if (pack.successCoords !== undefined)
                         p.successCoords = pack.successCoords;
+                    if(pack.playerDirection !== undefined)
+                        p.playerDirection = pack.playerDirection;
+                    if(pack.walkingMod !== undefined)
+                        p.walkingMod = pack.walkingMod;
                 }
             }
             for (var i = 0; i < data.car.length; i++) {
@@ -491,20 +499,21 @@
                 height);
         }
 
+    
+            //    ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-width/2, y-height/2, width/3, height/4);
         var drawDummyBunny = function (currentPlayer, x, y) {
             if (currentPlayer.number === "1") {
                 var width = Img.player1.width;
                 var height = Img.player1.height;
 
-                ctx.drawImage(Img.player1, 0, 0, Img.player1.width, Img.player1.height, x - width / 2, y - height /
-                    2, width, height);
+                ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
 
             } else if (currentPlayer.number === "2") {
                 var width = Img.player2.width;
                 var height = Img.player2.height;
 
-                ctx.drawImage(Img.player2, 0, 0, Img.player2.width, Img.player2.height, x - width / 2, y - height /
-                    2, width, height);
+                ctx.drawImage(Img.player2, Img.player2.width/3, Img.player2.height/4, Img.player2.width/3, Img.player2.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
+
 
             }
         }

@@ -61,7 +61,7 @@ serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
 
 // Socket list keeps track of all clients connected to the server. 
 var SOCKET_LIST = {};
-
+var PLAYER_DIRECTIONS = {"up":3,"down":0,"right":2,"left":1};
 var AVAILABLE_PLAYERS = [1,2];
 
 var Entity = function(){
@@ -98,8 +98,11 @@ var Player = function(id) {
     self.xDeathPos = 0;
     self.yDeathPos = 0;
     self.successCoords = []; 
+    self.walkingCounter = 0;
+    self.playerDirection = PLAYER_DIRECTIONS["right"];
+    self.walkingMod = self.walkingCounter%3;
     self.alive = true;
-    self.maxSpd = 10;
+    self.maxSpd = 5;
     self.count = 0;
 
     // Check which player, and give different spawning points
@@ -118,6 +121,7 @@ var Player = function(id) {
     var super_update = self.update;
     
     self.update = function(){
+        self.walkingCounter ++;
         self.updateSpd();
         super_update();
 
@@ -131,23 +135,44 @@ var Player = function(id) {
     self.updateSpd = function(){
         if(self.pressingRight && self.x<680){
             self.spdX = self.maxSpd;
+            self.playerDirection = PLAYER_DIRECTIONS["right"];
+            self.walkingCounter += 0.001;
+            self.walkingMod = Math.floor(self.walkingCounter%3);
+
         }
         else if(self.pressingLeft && self.x>22){
             self.spdX = -self.maxSpd;
+            self.playerDirection = PLAYER_DIRECTIONS["left"];
+            self.walkingCounter += 0.001;
+            self.walkingMod = Math.floor(self.walkingCounter%3);
+
         }
         else{
             self.spdX=0;
+            if(self.playerDirection === PLAYER_DIRECTIONS["right"]){
+
+            }
         }
 
         if(self.pressingDown && self.y < 390){
             self.spdY = self.maxSpd;
+            self.playerDirection = PLAYER_DIRECTIONS["down"];
+            self.walkingCounter += 0.001;
+            self.walkingMod = Math.floor(self.walkingCounter%3);
+
         }
         else if(self.pressingUp && self.y > 25){
             self.spdY = -self.maxSpd;
+            self.playerDirection = PLAYER_DIRECTIONS["up"];
+            self.walkingCounter += 0.001;
+            self.walkingMod = Math.floor(self.walkingCounter%3);
+
         }
         else{
             self.spdY=0;
         }
+        //self.walkingMod ++;
+        console.log("WALKING MOD: ", self.walkingMod);
     }
     
     self.getInitPack = function(){
@@ -158,7 +183,10 @@ var Player = function(id) {
             alive:self.alive,
             number:self.number,
             count:self.count,
-            successCoords: self.successCoords
+            successCoords: self.successCoords,
+            walkingMod:self.walkingMod,
+            playerDirection: self.playerDirection,
+            walkingCounter: self.walkingCounter
 
         }
     }
@@ -173,8 +201,9 @@ var Player = function(id) {
             yDeathPos:self.yDeathPos,
             alive:self.alive,    
             count:self.count,
-            successCoords: self.successCoords
-
+            successCoords: self.successCoords,
+            walkingMod:self.walkingMod,
+            playerDirection:self.playerDirection
         }
     }
 
@@ -300,6 +329,8 @@ var Car = function(x,y, spdY, drivingDown){
 
 }
 Car.list = {}; 
+
+
 
 Car.onConnect = function(){
     drivingDown = true;
