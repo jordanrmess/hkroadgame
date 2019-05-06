@@ -395,16 +395,6 @@ var addUser = function(data,cb){
 var getTopPlayers = function(cb){
     var all_scores = [];
     var top_scores = []; 
-<<<<<<< HEAD
-    var query = db.users.find(function(err,res){
-         res.toArray(function (err, docs) {
-            if(err){console.log("error accessing record" + err);}
-            docs.forEach(function (doc) {
-               all_scores.push({username:doc.username,score:doc.score});
-            });
-            top_scores = all_scores.sort((a,b) => a.score>b.score).slice(0,3);
-            cb(top_scores);
-=======
     db.user_info.find(function(err,res){
 
         console.log(res);
@@ -415,9 +405,8 @@ var getTopPlayers = function(cb){
         cb(top_scores);
 
      });
-     
-    
 }
+    
 
 var io = require('socket.io')(serv,{}); 
 var currentGame;
