@@ -2,37 +2,7 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
-// var MongoClient = require('mongodb').MongoClient;
-var bodyParser = require('body-parser');
-// var mongoose = require('mongoose');
-var mongojs = require("mongojs");
-var db= mongojs('localhost:27017/users',['users']);
-
-
-
-//Connect to database 
-
-// var uri = "mongodb://jordanrmess:Class2020!@ds051943.mlab.com:51943/bunnycrossing";
-// mongoose.connect(uri,{
-//     useNewUrlParser: true
-// });
-
-// let db = mongoose.connection;
-
-// db.on('error', console.error.bind(console, 'connection error:'));
-
-// db.once('open', function callback() {
-//     console.log("db connected");
-// });
-
-
-//Setup Express App
-
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({
-//     extended: false
-// }));
-
+const fs = require('fs');
 
 // If query is '/' (nothing)
 app.get('/',function(req,res){
@@ -63,6 +33,7 @@ serv.listen((process.env.PORT || 2000), () => {console.log("Server started");});
 var SOCKET_LIST = {};
 var PLAYER_DIRECTIONS = {"up":3,"down":0,"right":2,"left":1};
 var AVAILABLE_PLAYERS = [1,2];
+var SOCKET_ID_TO_NUMBER = {};
 
 var Entity = function(){
     var self = {
@@ -219,6 +190,7 @@ Player.list = {};
 Player.onConnect = function(socket){
     
     var player = Player(socket.id);
+    SOCKET_ID_TO_NUMBER[socket.id] = player.number;
 
     // Listens to client key presses, updates states of client accordingly
     socket.on('keyPress',function(data){
@@ -366,31 +338,62 @@ Car.getAllInitPack = function(){
  
 
 //Callback functions mock database promises
-var isValidPassword = function(data,cb){
-    db.users.find({username:data.username,password:data.password},function(err,res){
-        if(res.length > 0)
-            cb(true);
-        else 
-            cb(false);
-    });
+var isValidPassword = function(data){
+    var flag=false;
+    fs.readFile('users.json', 'utf8', function readFileCallback(err, response){
+        if (err){
+            console.log(err);
+
+        } else {
+        obj = JSON.parse(response); //now it an object
+        //console.log(obj);
+
+        obj.users.forEach(function(element) {
+            
+            if((element.username === data.username) && (element.password === data.password)){
+                console.log("valid password");
+                flag= true;
+            }
+        });
+        return flag;
+    }});   
 }
 
 var userExists = function(data,cb){
+    fs.readFile('users.json', 'utf8', function readFileCallback(err, response){
+        console.log("READING FILE");
+        if (err){
+            console.log(err);
 
-    db.users.find({username:data.username},function(err,res){
-        if(res.length >0){
-            cb(true);
-        }else{
-            cb(false);
-        }
-    });
+        } else {
+        obj = JSON.parse(response); //now it an object
+        obj.users.forEach(function(element) {
+            if(element.username === data.username){
+                cb(true);
+            }
+        });
+        cb(false);
+        
+    }});   
 }
 
-var addUser = function(data,cb){
-    db.users.insert({username:data.username,password:data.password,score:0},function(err,res){
-        cb();
-    });
+var addUser = function(data){
+    fs.readFile('users.json', 'utf8', function readFileCallback(err, response){
+        if (err){
+            console.log(err);
+            socket.emit("SIGN_UP_RESPONSE",{success:false});
 
+        } else {
+        obj = JSON.parse(response); //now it an object
+        obj.users.push({username: data.username, password:data.password,score:0}); //add some data
+        json = JSON.stringify(obj); //convert it back to json
+        fs.writeFile('users.json', json, 'utf8', function(err){
+            if(err) {
+                console.log(err);
+             }
+        }); // write it back   
+    }
+});
 }
 
 var getTopPlayers = function(cb){
@@ -465,7 +468,7 @@ io.sockets.on('connection',function(socket){
    if(currentGame.numConnections === maxConnections){
         console.log("max connections");
         socket.disconnect(true);
-        console.log("disconnect socket. number of connections are %s", currentgame.numConnections);
+        // console.log("disconnect socket. number of connections are %s", currentgame.numConnections);
     }
     currentGame.numConnections ++;
 
@@ -474,14 +477,14 @@ io.sockets.on('connection',function(socket){
     SOCKET_LIST[socket.id] = socket;
 
     socket.on("SIGN_IN_REQUEST", function(data){
-        isValidPassword(data,function(res){
-            if(res){
-                Player.onConnect(socket);
-                socket.emit("SIGN_IN_RESPONSE",{success:true});
-            }else{
-                socket.emit("SIGN_IN_RESPONSE",{success:false});
-            }
-        })
+        if(isValidPassword(data)){
+            Player.onConnect(socket);
+            console.log("player connected");
+            socket.emit("SIGN_IN_RESPONSE",{success:true});
+        }else{
+            socket.emit("SIGN_IN_RESPONSE",{success:false});
+        }
+        
     });
 
     //Adding a new user to mock database 
@@ -490,11 +493,11 @@ io.sockets.on('connection',function(socket){
             if(res){
                 socket.emit("SIGN_UP_RESPONSE",{success:false});
             }else{
-                addUser(data,function(res){
-                    socket.emit("SIGN_UP_RESPONSE",{success:true});
-                })
+                addUser(data);
+                socket.emit("SIGN_UP_RESPONSE",{success:true});
             }
-        });
+            
+        })
     });
 
     //If the game has 2 players, start game
@@ -533,11 +536,9 @@ io.sockets.on('connection',function(socket){
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
-        console.log("socket ", socket.id, " with number" , Player.list[socket.id],"disconnected");   
-        console.log("AVAILABLE_PLAYERS before", AVAILABLE_PLAYERS);
-        AVAILABLE_PLAYERS.push(Player.list[socket.id].number);
+
+        AVAILABLE_PLAYERS.push(SOCKET_ID_TO_NUMBER[socket.id]);
         AVAILABLE_PLAYERS.sort();
-        console.log("AVAILABLE_PLAYERS after", AVAILABLE_PLAYERS);
 
         delete SOCKET_LIST[socket.id]; 
         Player.onDisconnect(socket);

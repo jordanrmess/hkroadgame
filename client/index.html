@@ -16,7 +16,7 @@
     <div id="container">
         <div id="text_prompts">
             <video autoplay muted loop id="vid" src="./client/img/car_background_video.mov"></video>
-            <div id="signIn">
+            <div class="container" id="signIn">
                 <div id="sign_in_text" class="container">
                     <div class="row">
                         <div id="welcome" class="col-lg-12">
@@ -24,29 +24,23 @@
                         </div>
 
                     </div>
-                    <div id="sign_in_instructions" class="row">
-                        <div class="col-lg-12">
-                            <h4>Please sign in or sign up in order to enter game.</h3>
+                    <form id="signInForm">
+                        <div class="form-group">
+                            <label for="username_input">username</label>
+                            <input type="text" class="form-control" id="username">
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-1">
-                            <p>Username: </p>
+                        <div class="form-group">
+                            <label for="password_input">Password</label>
+                            <input type="password" class="form-control" id="password" placeholder="Password">
                         </div>
-                        <div class="col-md-11"><input id="username" type="text" placeholder="Type username here" />
+                        <div class="form-group">
+                            <button id="sign_up_button" class="btn btn-primary">sign up button</button>
+                            <button id="sign_in_button" class="btn btn-primary">sign in button</button>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-1">
-                            <p>Password: </p>
-                        </div>
-                        <div class="col-md-11"><input id="password" type="password" placeholder="Type password here" />
-                        </div>
-                    </div>
-                    <div id="buttons" class="row">
-                        <div class="col-md-2"><button id="sign_in_button">Sign In</button></div>
-                        <div class="col-md-10"><button id="sign_up_button">Sign up</button></div>
-                    </div>
+                        
+
+                    </form>
+
                 </div>
             </div>
             <div class="container" id="instructionsScreen">
@@ -105,7 +99,9 @@
             <div id="leaderboardScreen">
                 <div class="container">
                     <div class="row">
-                        <div class="col-lg-12"><h1 id="high_score_text">Top 3 Players</h1></div>
+                        <div class="col-lg-12">
+                            <h1 id="high_score_text">Top 3 Players</h1>
+                        </div>
                     </div>
                     <ol id="ranks"></ol>
                 </div>
@@ -189,13 +185,28 @@
             socket.emit('SIGN_IN_REQUEST', {
                 username: $("#username").val(),
                 password: $("#password").val()
-            })
+            });
+
+
         });
         $("#sign_up_button").click(function () {
+            
+           console.log("request about to be sent");
             socket.emit('SIGN_UP_REQUEST', {
                 username: $("#username").val(),
                 password: $("#password").val()
-            })
+            });
+            // var data = $("#signInForm").serialize();
+
+            // $.post("../json.php", data, function (response) {
+            //     if(response.sucess){
+            //         $("#signIn").hide();
+            //         $("#instructionsScreen").show()
+            //     }else{
+            //         alert("failure to post");
+            //     }
+            // })
+
         });
 
         $("#leaderboard").click(function () {
@@ -210,12 +221,12 @@
 
                 $.each(result, function (i) {
                     console.log(result[i]);
-                    var text = '<h3>'+(result[i]).username+": "+ (result[i]).score+'</h3>';
-                    var li = $('<li>'+text+'</li>').appendTo(list);
+                    var text = '<h3>' + (result[i]).username + ": " + (result[i]).score + '</h3>';
+                    var li = $('<li>' + text + '</li>').appendTo(list);
                 });
 
-                
-                                //Append high scores here
+
+                //Append high scores here
             } else {
                 alert("leaderboard could not be shown at this time");
             }
@@ -235,9 +246,11 @@
         });
 
         socket.on('SIGN_UP_RESPONSE', function (data) {
+            console.log("response from server is: " + data);
             if (data.success) {
-                $("#instructionsScreen").show();
                 $("#signIn").hide();
+                $("#instructionsScreen").show();
+                console.log("posted to database");
             } else {
                 alert("Username already exists");
             }
@@ -332,7 +345,6 @@
                 new Car(data.car[i], carImages[i]);
             }
             game = new Game(data.game);
-            console.log("game object" + game.numConnections);
 
         });
 
