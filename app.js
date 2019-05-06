@@ -2,7 +2,12 @@
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app); 
-const fs = require('fs');
+// var MongoClient = require('mongodb').MongoClient;
+var bodyParser = require('body-parser');
+// var mongoose = require('mongoose');
+var mongojs = require("mongojs");
+var db= mongojs('localhost:27017/users',['users']);
+
 
 // If query is '/' (nothing)
 app.get('/',function(req,res){
@@ -77,7 +82,6 @@ var Player = function(id) {
     self.count = 0;
 
     // Check which player, and give different spawning points
-
     self.setStartingPosition = function(){
        // self.alive = true;
         if(self.number === "1"){
@@ -536,7 +540,6 @@ io.sockets.on('connection',function(socket){
 
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
-
         AVAILABLE_PLAYERS.push(SOCKET_ID_TO_NUMBER[socket.id]);
         AVAILABLE_PLAYERS.sort();
 
@@ -544,12 +547,9 @@ io.sockets.on('connection',function(socket){
         Player.onDisconnect(socket);
         currentGame.numConnections--;
         
-
     });
-
-    console.log("current connections: %s", currentGame.numConnections);
+    //console.log("current connections: %s", currentGame.numConnections);
 });
-
 
 var initPack = {player:[],car:[],game:[]};
 var removePack = {player:[],game:[]};
@@ -577,10 +577,10 @@ setInterval(function(){
         socket.emit("update",pack);
         socket.emit("remove", removePack);
     }
+
     initPack.player = [];
     initPack.car = []; 
     initPack.game = []; 
     removePack.player = [];
-
 
 },1000/25);
