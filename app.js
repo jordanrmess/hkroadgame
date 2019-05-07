@@ -362,6 +362,10 @@ var Game = function(){
         }
     }
 
+    self.resetTimer = function(){
+        self.timeRemaining = 10;
+    }
+
     initPack.game = (self.getInitPack()); 
     return self; 
 }
@@ -379,33 +383,67 @@ var currentGame;
 
 var maxConnections=2;
 var currentConnections=0;
-// var car = Car();
+var SOCKET_OBJECTS = [];
+var SOCKET_IDS = [];
+
 io.sockets.on('connection',function(socket){
     // server assigns a unique id to the socket
+    console.log("-----------");
+    var rand = Math.random();
+    console.log("random variable: ", rand);
+
     if(currentConnections === maxConnections){
         socket.emit("denyPermission");
         socket.disconnect();
+        console.log("denied denied permission");
 
+    }else{
+        SOCKET_OBJECTS.push(socket);
+        socket.id=Math.random();
+        // Add it to the list of sockets currently online
+        SOCKET_LIST[socket.id] = socket;
+        SOCKET_IDS.push(socket.id);
+        Player.onConnect(socket);
+        currentConnections = SOCKET_IDS.length;
+        console.log("currentConnections:", currentConnections);
+        console.log("sockets connected: ", SOCKET_IDS);
     }
+    
 
-   
-    socket.id=Math.random();
-    // Add it to the list of sockets currently online
-    SOCKET_LIST[socket.id] = socket;
-    Player.onConnect(socket);
-    currentConnections++;
 
     if(currentConnections===2){ 
+        console.log("game started");
         io.emit("GAME_STARTED");
         //Start timer method
         currentGame.startTimer(io); 
     }
     
-    // Server listens to disconnects, and removes disconnected clients.
+    // when one player disconnects, game is ended
     socket.on('disconnect',function(){
-        delete SOCKET_LIST[socket.id]; 
+        for(i in SOCKET_OBJECTS){
+            io.emit("GAME_OVER", null);
+            SOCKET_OBJECTS[i].disconnect();
+        }
+
+        delete SOCKET_LIST[socket.id];
+        SOCKET_IDS.splice(SOCKET_IDS.indexOf(socket.id), 1); 
+        currentConnections = SOCKET_IDS.length;
         Player.onDisconnect(socket);
-        currentConnections--;
+
+
+        console.log("socket disconnected, number of connections are now %s", currentConnections);
+        console.log("current sockets:", SOCKET_IDS);
+        console.log("random variable at end: ", rand);
+        console.log("-----------");
+    console.log("AT END. Connections: ", currentConnections);
+    console.log("AT END. Sockets connected:", SOCKET_IDS);
+
+    if (currentConnections === 0){
+        currentGame.resetTimer();
+ //       initializeServer=true;
+        AVAILABLE_PLAYERS = [1,2];
+    }
+
     });
 });
 
@@ -434,6 +472,7 @@ setInterval(function(){
         socket.emit("update",pack);
         socket.emit("remove", removePack);
     }
+
     initPack.player = [];
     initPack.car = []; 
     initPack.game=[];
