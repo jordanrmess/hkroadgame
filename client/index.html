@@ -3,9 +3,9 @@
 <html>
 <head>
     <title>Multiplayer Game</title>
-
     <canvas id="ctx" width="725" height="408" style="border:1px solid #000000;"></canvas>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
     <!-- ***** SCRIPT STARTS HERE ***** -->
     <script>
@@ -125,6 +125,10 @@
         Car.list = {}; 
 
     
+        socket.on("denyPermission",function(){
+            $("#ctx").hide();
+        })
+
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
             if(data.selfId){
