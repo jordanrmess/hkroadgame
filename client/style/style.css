@@ -1,12 +1,14 @@
-head {
-  font-family: 'Share Tech Mono', monospace !important;
-  color:red;
-}
 
 
 
 #gameover{
+  font-family: 'Share Tech Mono', monospace !important;
+  color:black;
   display:none;
+}
+
+#player2score{
+  padding-bottom:20px;
 }
 
 

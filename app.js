@@ -57,7 +57,7 @@ var Player = function(id) {
     self.playerDirection = PLAYER_DIRECTIONS["right"];
     self.walkingMod = self.walkingCounter%3;
     self.alive = true;
-    self.maxSpd = 5;
+    self.maxSpd = 10;
     self.count = 0;
 
     // Check which player, and give different spawning points
@@ -332,7 +332,7 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:10
+        timeRemaining:30
         // numConnections:0
     }
    
@@ -363,7 +363,7 @@ var Game = function(){
     }
 
     self.resetTimer = function(){
-        self.timeRemaining = 10;
+        self.timeRemaining = 30;
     }
 
     initPack.game = (self.getInitPack()); 
