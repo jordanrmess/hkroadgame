@@ -125,7 +125,9 @@
         }
         Car.list = {}; 
 
-    
+        socket.on("denyPermission",function(){
+            $("#ctx").hide();
+        });
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
             if(data.selfId){

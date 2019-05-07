@@ -127,7 +127,6 @@ var Player = function(id) {
             self.spdY=0;
         }
         //self.walkingMod ++;
-        console.log("WALKING MOD: ", self.walkingMod);
     }
     
     self.getInitPack = function(){
@@ -384,6 +383,7 @@ var currentConnections=0;
 io.sockets.on('connection',function(socket){
     // server assigns a unique id to the socket
     if(currentConnections === maxConnections){
+        socket.emit("denyPermission");
         socket.disconnect();
     }
 
