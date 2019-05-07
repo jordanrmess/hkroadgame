@@ -495,7 +495,6 @@ var restart = false;
 setInterval(function(){
     // create cars and the game object
     if(initializeServer){
-        console.log("heyy");
         Car.onConnect(); 
         currentGame = Game();
         initializeServer = false;
