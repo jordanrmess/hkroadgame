@@ -20,6 +20,7 @@ var SOCKET_LIST = {};
 var PLAYER_DIRECTIONS = {"up":3,"down":0,"right":2,"left":1};
 var AVAILABLE_PLAYERS = [1,2];
 
+// Entity object is the object type for all entities in the game (cars and players)
 var Entity = function(){
     var self = {
         x:0,
@@ -31,41 +32,53 @@ var Entity = function(){
     self.update = function(){
         self.updatePosition();
     }
+
+    // updates the coordinates (position) of the entity
     self.updatePosition = function(){
         self.x += self.spdX;
         self.y += self.spdY;
     }
+
+    // measures the distance between itself and another object (Entity)
     self.getDistance = function(pt){
         return Math.sqrt(Math.pow(self.x-pt.x,2) + Math.pow(self.y-pt.y,2));
     }
+
     return self;
 }
 
-// Create a player, passes id as parameter
+// Player object is the object type for every active bunny (player), 
+// socket id of the client is passed as an argument.
 var Player = function(id) {
-    var self = Entity();
+
+    var self = Entity();   // inherits the Entity object's attributes and methods
     self.id = id; 
-    self.number = "" + AVAILABLE_PLAYERS.shift();
+    self.number = "" + AVAILABLE_PLAYERS.shift(); // assigns the player a number (1 or 2)
     self.pressingRight = false;
     self.pressingLeft = false;
     self.pressingUp = false;
     self.pressingDown = false;
-    self.xDeathPos = 0;
-    self.yDeathPos = 0;
-    self.successCoords = []; 
-    self.walkingCounter = 0;
+    self.maxSpd = 10;
+    self.canMove = false; // at the start of the game, no player shall be able to move
+    
+    // used for drawing blood spatters, and successful bunnies on right hand side
+    self.xDeathPos = 0;   
+    self.yDeathPos = 0;   
+    self.successCoords = [];
+    self.alive = true;
+
+    // used for bunny animation
+    self.walkingCounter = 0; 
     self.playerDirection = PLAYER_DIRECTIONS["right"];
     self.walkingMod = self.walkingCounter%3;
-    self.alive = true;
-    self.maxSpd = 10;
-    self.count = 0;
 
-    // Check which player, and give different spawning points
+    // keeps track of no. of saved bunnies 
+    self.count = 0;     
 
+    // check which player, and give different spawning points
     self.setStartingPosition = function(){
-       // self.alive = true;
         if(self.number === "1"){
-            self.x = 42;
+            self.x = 42; 
             self.y = 150;
         } else if(self.number === "2"){
             self.x = 42;
@@ -80,16 +93,22 @@ var Player = function(id) {
         self.updateSpd();
         super_update();
 
+        // scenario when bunny made it to the other side
         if(self.x >= 680){
-            self.count++; // BUNNY MADE IT TO OTHER SIDE
+            self.count++; 
             self.successCoords.push([self.x,self.y]); 
+
+            //respawn
             self.setStartingPosition();
         }
     }
 
+    // updates the coordinates of the player and checks that player can't escape canvas
     self.updateSpd = function(){
         if(self.pressingRight && self.x<680){
             self.spdX = self.maxSpd;
+
+            // player animation
             self.playerDirection = PLAYER_DIRECTIONS["right"];
             self.walkingCounter += 0.001;
             self.walkingMod = Math.floor(self.walkingCounter%3);
@@ -97,6 +116,8 @@ var Player = function(id) {
         }
         else if(self.pressingLeft && self.x>22){
             self.spdX = -self.maxSpd;
+
+            // player animation
             self.playerDirection = PLAYER_DIRECTIONS["left"];
             self.walkingCounter += 0.001;
             self.walkingMod = Math.floor(self.walkingCounter%3);
@@ -104,13 +125,12 @@ var Player = function(id) {
         }
         else{
             self.spdX=0;
-            if(self.playerDirection === PLAYER_DIRECTIONS["right"]){
-
-            }
         }
 
         if(self.pressingDown && self.y < 390){
             self.spdY = self.maxSpd;
+
+            // player animation
             self.playerDirection = PLAYER_DIRECTIONS["down"];
             self.walkingCounter += 0.001;
             self.walkingMod = Math.floor(self.walkingCounter%3);
@@ -118,6 +138,8 @@ var Player = function(id) {
         }
         else if(self.pressingUp && self.y > 25){
             self.spdY = -self.maxSpd;
+
+            // player animation
             self.playerDirection = PLAYER_DIRECTIONS["up"];
             self.walkingCounter += 0.001;
             self.walkingMod = Math.floor(self.walkingCounter%3);
@@ -126,9 +148,10 @@ var Player = function(id) {
         else{
             self.spdY=0;
         }
-        //self.walkingMod ++;
     }
     
+    // get initialization pack containing initialization data about player, 
+    // this is later sent to client
     self.getInitPack = function(){
         return{
             id:self.id,
@@ -140,12 +163,12 @@ var Player = function(id) {
             successCoords: self.successCoords,
             walkingMod:self.walkingMod,
             playerDirection: self.playerDirection,
-            walkingCounter: self.walkingCounter
-
+            walkingCounter: self.walkingCounter,
         }
     }
 
-    // sent every single frame
+    // get update pack containing information about the player that we will need to update
+    // throughout the game
     self.getUpdatePack = function(){
         return{
             id:self.id,
@@ -162,30 +185,35 @@ var Player = function(id) {
     }
 
     self.setStartingPosition();
+
+    // add player to the dictionary Player.list containing all Player objects active in the game
+    // we will have 2 entries in this dictionary at most in each game session
     Player.list[id] = self;
 
+    // push the player's initialization pack to the general initPack dictionary
     initPack.player.push(self.getInitPack());
     return self;   
 }
 
+// Create Player dictionary that stores all player objects
 Player.list = {};
 
 
-
-Player.onConnect = function(socket){
-    
+Player.onConnect = function(socket){    
     var player = Player(socket.id);
 
     // Listens to client key presses, updates states of client accordingly
     socket.on('keyPress',function(data){
-        if(data.inputId ==='left'){
-            player.pressingLeft = data.state; 
-        }else if(data.inputId ==='right'){
-            player.pressingRight = data.state; 
-        }else if(data.inputId ==='up'){
-            player.pressingUp = data.state; 
-        }else if(data.inputId ==='down'){
-            player.pressingDown = data.state; 
+        if(player.canMove){
+            if(data.inputId ==='left'){
+                player.pressingLeft = data.state; 
+            }else if(data.inputId ==='right'){
+                player.pressingRight = data.state; 
+            }else if(data.inputId ==='up'){
+                player.pressingUp = data.state; 
+            }else if(data.inputId ==='down'){
+                player.pressingDown = data.state; 
+            }
         }
     });
 
@@ -296,18 +324,12 @@ Car.onConnect = function(){
     var car5 = Car(525.5, 0, 7, drivingDown);
     var car6 = Car(600.5, 0, 5, drivingDown);
 
-    //var car3 = Car();
-   // console.log("Car list: " + Car.list[car.id]);
 }
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
          var car = Car.list[i]; 
-      //   console.log("car.y BEFORE update ",car.y);
          car.update(); 
-      //   console.log("car.y AFTER update ",car.y);
-
-
          pack.push({
              id:car.id,
              x:car.x,
@@ -323,7 +345,6 @@ Car.getAllInitPack = function(){
     for(var i in Car.list){
         cars.push(Car.list[i].getInitPack());
     }
- //   console.log(cars);
     return cars;
 }
 
@@ -333,35 +354,28 @@ var Game = function(){
     //Time starts at 30 seconds
     var self = {
         timeRemaining:30,
-        // numConnections:0
     }
    
-
     self.startTimer = function() {
-      
-            if(self.timeRemaining > 0){
-                self.timeRemaining-=1; 
-                setTimeout(self.startTimer,1000)
-            }else{
-                //Time has run out, alert the clients
-                io.emit("GAME_OVER",Player.update()); 
-                self.resetTimer;
-
-            }
-        
+        if(self.timeRemaining > 0){
+            self.timeRemaining-=1; 
+            setTimeout(self.startTimer,1000)
+        }else{
+            //Time has run out, alert the clients
+            io.emit("GAME_OVER",Player.update()); 
+            self.resetTimer;
+        }
     }
 
     self.getInitPack = function(){
         return {
             timeRemaining: self.timeRemaining,
-            // numConnections: self.numConnections
         }
     }
 
     self.getUpdatePack = function() {
         return{
             timeRemaining: self.timeRemaining
-            // numConnections: self.numConnections
         }
     }
 
@@ -373,14 +387,6 @@ var Game = function(){
     return self; 
 }
 
-// //Creating game object
-// Game.init = function(){
-//     currentGame = Game();
-// }
-
-
-// Initializes an io Socket object 
-
 var io = require('socket.io')(serv,{}); 
 var currentGame;
 
@@ -389,47 +395,42 @@ var currentConnections=0;
 var SOCKET_OBJECTS = [];
 var SOCKET_IDS = [];
 
+// called on new client connection
 io.sockets.on('connection',function(socket){
-    // server assigns a unique id to the socket
-    console.log("-----------");
-    var rand = Math.random();
-    console.log("random variable: ", rand);
-
+    
+    // disconnects newly connected client if connections > 2.
     if(currentConnections === maxConnections){
-        socket.emit("denyPermission");
         socket.disconnect();
-        console.log("denied denied permission");
 
     }else{
         SOCKET_OBJECTS.push(socket);
         socket.id=Math.random();
-        // Add it to the list of sockets currently online
+
+        // Adds  to the list of sockets currently online
         SOCKET_LIST[socket.id] = socket;
         SOCKET_IDS.push(socket.id);
         Player.onConnect(socket);
         currentConnections = SOCKET_IDS.length;
-        console.log("currentConnections:", currentConnections);
-        console.log("sockets connected: ", SOCKET_IDS);
+
+        // reset and start timer and allow players to move once two players have connected
         if(currentConnections===2){ 
-            console.log("game started");
-
-
             currentGame.resetTimer();
 
+            // allow players to move
+            for(i in Player.list){
+                var p = Player.list[i];
+                p.canMove = true
+            }
 
-            io.emit("GAME_STARTED");
-            //Start timer method
             currentGame.startTimer(io); 
         }
     }
     
-
-
-    
-    // when one player disconnects, game is ended
+    // when one player disconnects, all players in the game are disconnected
     socket.on('disconnect',function(){
         currentGame.active = false; 
         currentGame.resetTimer();
+
         for(i in SOCKET_OBJECTS){
             io.emit("GAME_OVER", null);
             SOCKET_OBJECTS[i].disconnect();
@@ -438,43 +439,50 @@ io.sockets.on('connection',function(socket){
         // remove disconnected player info
         delete SOCKET_LIST[socket.id];
         SOCKET_IDS.splice(SOCKET_IDS.indexOf(socket.id), 1); 
-        currentConnections = SOCKET_IDS.length;
         Player.onDisconnect(socket);
 
+        //update no. of currentConnections
+        currentConnections = SOCKET_IDS.length;
 
+    // reset important game variables when all players have disconnected
     if (currentConnections === 0){
+        // reset available player numbers that can be assigned
         AVAILABLE_PLAYERS = [1,2];
         restart = true;
     }
-
     });
 });
 
+// dictionaries used for passing data to all clients
 var initPack = {player:[],car:[],game:[]};
 var removePack = {player:[]};
 
+// set up important flags
 var initializeServer = true;
 var restart = false;
-// Loops through every player in our player list, and will update the X and Y position.
+
+// called 25 frames per second
 setInterval(function(){
-    // pack contains information about every single player in the game, and will be sent to every player conncted
+    // create cars and the game object
     if(initializeServer){
         Car.onConnect(); 
         currentGame = Game();
         initializeServer = false;
     }
+    // if there is a restart (new game session) a new game object is created
     if(restart){
         currentGame = Game();
         restart=false;
     }
     
-    //inti game and flip flag
+    // construct pack that will contain updated data about players, cars and game
     var pack = {
         player:Player.update(),
         car:Car.update(),
         game:currentGame.getUpdatePack()
     }
-    // Server emits the pack to each  connected client
+
+    // server emits the pack to each connected client
     for(var i in SOCKET_LIST){
         var socket = SOCKET_LIST[i];
         socket.emit("init", initPack);
@@ -482,11 +490,10 @@ setInterval(function(){
         socket.emit("remove", removePack);
     }
 
+    // reset initPack and removePack
     initPack.player = [];
     initPack.car = []; 
     initPack.game=[];
     removePack.player = [];
-    console.log('Socket ids in game: ',SOCKET_IDS);
-
 
 },1000/25);
