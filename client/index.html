@@ -123,18 +123,11 @@
             return self;
         }
         Car.list = {}; 
-
-<<<<<<< HEAD
     
         socket.on("denyPermission", function(){
             $("#ctx").hide();
         })
 
-=======
-        socket.on("denyPermission",function(){
-            $("#ctx").hide();
-        });
->>>>>>> 102889894cd4d68b0088a1326456c1419c6a5a2d
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
             if(data.selfId){
