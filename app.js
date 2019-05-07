@@ -194,7 +194,8 @@ Player.onConnect = function(socket){
         // Server tells client "hey, you have this socket id"
         selfId:socket.id,
         player:Player.getAllInitPack(),
-        car: Car.getAllInitPack()
+        car: Car.getAllInitPack(),
+        game:currentGame.getInitPack()
     })
 }
 
@@ -327,9 +328,56 @@ Car.getAllInitPack = function(){
     return cars;
 }
 
+//Game object stores important information about the current game
+var Game = function(){
+
+    //Time starts at 30 seconds
+    var self = {
+        timeRemaining:10
+        // numConnections:0
+    }
+   
+
+    self.startTimer = function() {
+        if(self.timeRemaining > 0){
+            self.timeRemaining-=1; 
+            setTimeout(self.startTimer,1000)
+        }else{
+            //Time has run out, alert the clients
+            io.emit("GAME_OVER",Player.update()); 
+        }
+        
+    }
+
+    self.getInitPack = function(){
+        return {
+            timeRemaining: self.timeRemaining,
+            // numConnections: self.numConnections
+        }
+    }
+
+    self.getUpdatePack = function() {
+        return{
+            timeRemaining: self.timeRemaining
+            // numConnections: self.numConnections
+        }
+    }
+
+    initPack.game = (self.getInitPack()); 
+    return self; 
+}
+
+//Creating game object
+Game.init = function(){
+    currentGame = Game();
+}
+
+
 // Initializes an io Socket object 
 
 var io = require('socket.io')(serv,{}); 
+var currentGame;
+
 var maxConnections=2;
 var currentConnections=0;
 // var car = Car();
@@ -339,11 +387,18 @@ io.sockets.on('connection',function(socket){
         socket.disconnect();
     }
 
+   
     socket.id=Math.random();
     // Add it to the list of sockets currently online
     SOCKET_LIST[socket.id] = socket;
     Player.onConnect(socket);
     currentConnections++;
+
+    if(currentConnections===2){ 
+        io.emit("GAME_STARTED");
+        //Start timer method
+        currentGame.startTimer(io); 
+    }
     
     // Server listens to disconnects, and removes disconnected clients.
     socket.on('disconnect',function(){
@@ -353,7 +408,7 @@ io.sockets.on('connection',function(socket){
     });
 });
 
-var initPack = {player:[],car:[]};
+var initPack = {player:[],car:[],game:[]};
 var removePack = {player:[]};
 
 var initializeServer = true;
@@ -363,11 +418,13 @@ setInterval(function(){
     // pack contains information about every single player in the game, and will be sent to every player conncted
     if(initializeServer){
         Car.onConnect(); 
+        Game.init();
         initializeServer = false;
     }
     var pack = {
         player:Player.update(),
-        car:Car.update()
+        car:Car.update(),
+        game:currentGame.getUpdatePack()
     }
     // Server emits the pack to each  connected client
     for(var i in SOCKET_LIST){
@@ -378,6 +435,7 @@ setInterval(function(){
     }
     initPack.player = [];
     initPack.car = []; 
+    initPack.game=[];
     removePack.player = [];
 
 

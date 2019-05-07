@@ -6,12 +6,13 @@
 
     <canvas id="ctx" width="725" height="408" style="border:1px solid #000000;"></canvas>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
     <!-- ***** SCRIPT STARTS HERE ***** -->
     <script>
         // container for the images
         var Img = {};
-
+        var timer = 30;
 
 
         // Player (bunny) images
@@ -146,6 +147,7 @@
 
         // update, only contains the difference
         socket.on("update", function(data){
+            timer = data.game.timeRemaining;
             for (var i = 0; i < data.player.length; i++){
                 var pack = data.player[i];
                 var p = Player.list[pack.id];
@@ -186,6 +188,11 @@
 
         });
 
+
+        socket.on("GAME_OVER",function(data){
+            $("#ctx").hide();
+        });
+
         // remove, notifies the client if entity has been removed
         socket.on("remove",function(data){
             for(var i=0; i<data.player.length; i++){
@@ -202,6 +209,7 @@
             ctx.clearRect(0,0,725,408);
             drawMap();
             drawCount();
+            drawTimer();
             for(var key in roadkillCoordinates){
                 drawBlood(key, roadkillCoordinates[key]);
             }
@@ -265,6 +273,10 @@
 
                 }
         }
+
+        var drawTimer = function(){
+                ctx.fillText("Time Remaining: " + timer,400,50); 
+         }
 
         // On key press
         document.addEventListener("keydown",function(event){
