@@ -11,7 +11,7 @@
     <script>
         // container for the images
         var Img = {};
-
+        var timer = 30;
 
 
         // Player (bunny) images
@@ -124,11 +124,17 @@
         }
         Car.list = {}; 
 
+<<<<<<< HEAD
     
         socket.on("denyPermission", function(){
             $("#ctx").hide();
         })
 
+=======
+        socket.on("denyPermission",function(){
+            $("#ctx").hide();
+        });
+>>>>>>> 102889894cd4d68b0088a1326456c1419c6a5a2d
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
             if(data.selfId){
@@ -150,6 +156,7 @@
 
         // update, only contains the difference
         socket.on("update", function(data){
+            timer = data.game.timeRemaining;
             for (var i = 0; i < data.player.length; i++){
                 var pack = data.player[i];
                 var p = Player.list[pack.id];
@@ -190,6 +197,11 @@
 
         });
 
+
+        socket.on("GAME_OVER",function(data){
+            $("#ctx").hide();
+        });
+
         // remove, notifies the client if entity has been removed
         socket.on("remove",function(data){
             for(var i=0; i<data.player.length; i++){
@@ -206,6 +218,7 @@
             ctx.clearRect(0,0,725,408);
             drawMap();
             drawCount();
+            drawTimer();
             for(var key in roadkillCoordinates){
                 drawBlood(key, roadkillCoordinates[key]);
             }
@@ -269,6 +282,10 @@
 
                 }
         }
+
+        var drawTimer = function(){
+                ctx.fillText("Time Remaining: " + timer,400,50); 
+         }
 
         // On key press
         document.addEventListener("keydown",function(event){

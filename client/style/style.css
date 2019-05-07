@@ -16,7 +16,6 @@ body {
 }
 
 #ctx {
-  display: none;
 }
 
 #fullScreen {
@@ -37,7 +36,6 @@ body {
 }
 
 #instructionsScreen {
-  display: none;
   margin: 20px;
 }
 
