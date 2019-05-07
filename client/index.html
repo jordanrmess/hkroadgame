@@ -3,7 +3,38 @@
 <html>
 <head>
     <title>Multiplayer Game</title>
+    <link rel = "stylesheet" type = "text/css" href = "/client/style/style.css" />
+    <link href="https://fonts.googleapis.com/css?family=Share+Tech+Mono" rel="stylesheet">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
     <canvas id="ctx" width="725" height="408" style="border:1px solid #000000;"></canvas>
+    <div id="gameover" class ="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1>Game Over</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12" >
+                <h1 id="player1score"> </h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12" >
+                <h1 id="player2score"></h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md">
+               <input type="button" value="Play Again" onclick="reloadPage();"/>
+            </div>
+        </div>
+        <div class="row">
+                <div class="col-md">
+                   <p>Please note that both players must click play again before a new game session starts</p>
+                </div>
+     </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
@@ -57,6 +88,10 @@
         var ctx = document.getElementById("ctx").getContext("2d");
         ctx.font="30px Arial";
 
+
+        var reloadPage = function(){
+            location.reload();
+        }
         // Player variables
 
         // Initializes a connection between the client and the server.
@@ -193,6 +228,18 @@
 
         socket.on("GAME_OVER",function(data){
             $("#ctx").hide();
+            $("#gameover").show();
+            for(var i in Player.list){
+                var p = Player.list[i];
+                if(p.number ==="1"){
+                    console.log('player1');
+                    $("#player1score").html("Player 1 score: "+ p.count);
+                }else{
+
+                    console.log('player2');
+                    $("#player2score").html("Player 2 score: " + p.count);
+                }
+            }
         });
 
         // remove, notifies the client if entity has been removed
