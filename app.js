@@ -199,10 +199,11 @@ var Player = function(id) {
 Player.list = {};
 
 
+// function 
 Player.onConnect = function(socket){    
     var player = Player(socket.id);
 
-    // Listens to client key presses, updates states of client accordingly
+    // Listens to client key press, for initialization
     socket.on('keyPress',function(data){
         if(player.canMove){
             if(data.inputId ==='left'){
@@ -226,6 +227,7 @@ Player.onConnect = function(socket){
     })
 }
 
+// get initialization packs of all players 
 Player.getAllInitPack = function(){
     var players = [];
     for(var i in Player.list){
@@ -234,11 +236,13 @@ Player.getAllInitPack = function(){
     return players;
 }
 
+// remove player information when the client disconnects
 Player.onDisconnect = function(socket){
     delete Player.list[socket.id];
     removePack.player.push(socket.id);
 }
 
+// get update pack of all players
 Player.update = function(){
     var pack = [];
     for(var i in Player.list){
@@ -249,17 +253,19 @@ Player.update = function(){
     }
     return pack;
 }
+
+// car object stores important information about each car
 var Car = function(x,y, spdY, drivingDown){
-    var self = Entity();
+    var self = Entity(); // inherits Entity()
     self.x =x; 
     self.y=y;
     self.id = Math.random();
     self.spdX = 0;
     self.spdY = spdY;
     self.drivingDown = drivingDown;
-    self.toRemove = false;
     var super_update = self.update;
 
+    // update position of the car
     self.update = function(){
         if(self.drivingDown){
             if(self.y > 464){
@@ -274,17 +280,24 @@ var Car = function(x,y, spdY, drivingDown){
                 self.y -= self.spdY;
             }
         }
+
+        // check whether the car is closer than 45 pixels to any of the players
         for(var i in Player.list){
             p = Player.list[i];
             if(self.getDistance(p) < 45){
+
+                // register player as dead and save coordinates
                 p.alive = false;
                 p.xDeathPos = p.x;
                 p.yDeathPos = p.y;
+
+                // respawn player
                 p.setStartingPosition();
             }
         }
-        //super_update();
     }
+
+    // get the car's intitialization pack
     self.getInitPack = function(){
         return{
             id:self.id,
@@ -293,6 +306,7 @@ var Car = function(x,y, spdY, drivingDown){
         }
     }
 
+    // get the cars update pack
     self.getUpdatePack = function(){
         return{
             id:self.id,
@@ -301,18 +315,19 @@ var Car = function(x,y, spdY, drivingDown){
         }
     }
 
-
-
+    // add the car object to the Car dicitionary that will store all 6 cars
     Car.list[self.id] = self;    
+
+    // push initialization pack to general initPack dictionary
     initPack.car.push(self.getInitPack());
 
     return self; 
-
 }
+
+// Create Player dictionary that stores all player objects
 Car.list = {}; 
 
-
-
+// on connect, create all 6 cars
 Car.onConnect = function(){
     drivingDown = true;
     var car1 = Car(123.5, 0, 5, drivingDown);
@@ -325,6 +340,8 @@ Car.onConnect = function(){
     var car6 = Car(600.5, 0, 5, drivingDown);
 
 }
+
+// return all update packs for all cars
 Car.update = function(){
      var pack = [];
      for(var i in Car.list){
@@ -339,6 +356,7 @@ Car.update = function(){
      return pack
 }
 
+// get init packs for each car 
 Car.getAllInitPack = function(){
 
     var cars = [];
@@ -348,48 +366,59 @@ Car.getAllInitPack = function(){
     return cars;
 }
 
-//Game object stores important information about the current game
+// game object stores important information about the current game
 var Game = function(){
 
-    //Time starts at 30 seconds
+    // time starts at 30 seconds
     var self = {
         timeRemaining:30,
     }
    
+    // starts counting down the timer
     self.startTimer = function() {
+
+        // decrement if time remaining
         if(self.timeRemaining > 0){
             self.timeRemaining-=1; 
             setTimeout(self.startTimer,1000)
-        }else{
-            //Time has run out, alert the clients
+        }
+
+        // if the timer runs out, the game is over, alert the clients
+        else{
             io.emit("GAME_OVER",Player.update()); 
             self.resetTimer;
         }
     }
 
+    // get initialization pack
     self.getInitPack = function(){
         return {
             timeRemaining: self.timeRemaining,
         }
     }
 
+    // get update pack 
     self.getUpdatePack = function() {
         return{
             timeRemaining: self.timeRemaining
         }
     }
 
+    // reset timer
     self.resetTimer = function(){
         self.timeRemaining = 30;
     }
 
+    // add the game object's initPack to the general initPack dictionary
     initPack.game = (self.getInitPack()); 
     return self; 
 }
 
+// create server object and declare the current game object variable
 var io = require('socket.io')(serv,{}); 
 var currentGame;
 
+// create variables to keep track of client connections
 var maxConnections=2;
 var currentConnections=0;
 var SOCKET_OBJECTS = [];
@@ -422,6 +451,7 @@ io.sockets.on('connection',function(socket){
                 p.canMove = true
             }
 
+            io.emit("GAME_STARTED");
             currentGame.startTimer(io); 
         }
     }
@@ -465,6 +495,7 @@ var restart = false;
 setInterval(function(){
     // create cars and the game object
     if(initializeServer){
+        console.log("heyy");
         Car.onConnect(); 
         currentGame = Game();
         initializeServer = false;

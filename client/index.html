@@ -58,7 +58,6 @@
         var Img = {};
         var timer;
 
-
         // Player (bunny) images
         Img.player1 = new Image();
         Img.player1.src = "/client/img/bunny_sprite1.png";
@@ -108,11 +107,12 @@
             location.reload();
 
         }
-        // Player variables
 
         // Initializes a connection between the client and the server.
         var socket=io();
 
+        // local Player class for client to create player objects to store information about each
+        // player locally
         var Player = function(initPack){
             var self = {};
             self.id = initPack.id;
@@ -120,7 +120,6 @@
             self.x = initPack.x;
             self.y = initPack.y;
             self.alive = initPack.alive;
-
             self.count = initPack.count;
             self.xDeathPos = 0;
             self.yDeathPos = 0;  
@@ -130,84 +129,84 @@
             self.walkingMod = initPack.walkingMod;
 
             self.draw = function(){
+
+                // variables used for drawing sprite image
                 var imgHeight = Img.player1.height/4;
                 var imgWidth = Img.player1.width/3;
 
-               // console.log("PLAYER DIRECTION: ",self.playerDirection);
+               // draw player 1
                 if(self.number === "1"){
                     ctx.drawImage(Img.player1, self.walkingMod*imgWidth, self.playerDirection*imgHeight, imgWidth, imgHeight, self.x-imgWidth/2, self.y-imgHeight/2, imgWidth, imgHeight);
 
+                // draw player 2
                 } else if(self.number === "2"){
                     ctx.drawImage(Img.player2, self.walkingMod*imgWidth, self.playerDirection*imgHeight, imgWidth, imgHeight, self.x-imgWidth/2, self.y-imgHeight/2, imgWidth, imgHeight);
-
                 }
             }
 
-
             Player.list[self.id] = self;
-          //  console.log(initPack);
             return self;
 
         }
         Player.list = {};
 
+        // declare selfId variable
         var selfId = null;
 
+        // local Car class for client to track all car objects sent from server
         var Car = function(initPack, image){
-         //   console.log("CAR's INITPACK", initPack);
             var self = {}; 
             self.id = initPack.id; 
             self.x  = initPack.x; 
             self.y = initPack.y; 
             self.image = image;
             
-            
-
+            // draw car image
             self.draw = function() {
                 var width = self.image.width*0.20;
                 var height = self.image.height*0.20;
-             //   console.log(self.x, self.y);
                 ctx.drawImage(self.image, 0, 0, self.image.width, self.image.height, self.x-width/2, self.y-height/2, width, height);
-
             }
+
             Car.list[self.id] = self; 
             return self;
         }
         Car.list = {}; 
     
+        // hides game canvas and notifies the client trying to connect that the game is full
         socket.on("denyPermission", function(){
             $("#ctx").hide();
             $("#full").show();
-
         })
 
-        // init, when new entities are created, contains all data
+        // init is called when new entities are created and contains initialization data about them
         socket.on("init", function(data){
-            // timer = 30;
             if(data.selfId){
-                //console.log("DEN FANNS: "+ data.selfId);
                 selfId = data.selfId;
-                //console.log("OCH DEN ÄR NU: "+selfId);
             }
+
+            // creates local Player objects with data sent from server
             for(var i = 0; i < data.player.length;i++){
                 new Player(data.player[i]);
-                console.log(data.player[i].playerDirection)
             }
-            //console.log(carImages);
+
+            // creates local Car objects with data sent from server
             for(var i in data.car){
                 new Car(data.car[i], carImages[i]);
             }
-
            
         });
 
-        // update, only contains the difference
+        // on update, only contains the difference and updates all car and player objects' attributes accordingly
+
         socket.on("update", function(data){
+            // updates the timer variable
             timer = data.game.timeRemaining;
+
+            // goes through all the Player objects received from server and updates local players
             for (var i = 0; i < data.player.length; i++){
                 var pack = data.player[i];
                 var p = Player.list[pack.id];
-                //console.log(pack);
                 if(p){
                     if(pack.x !== undefined)
                         p.x = pack.x;
@@ -229,7 +228,8 @@
                         p.walkingMod = pack.walkingMod;
                 }
             }
-         //   console.log("data.car",data.car);
+
+            // goes through all Car objects received from server and updates local car objects
             for (var i = 0; i < data.car.length; i++){
                 var pack = data.car[i];
                 var c = Car.list[pack.id];
@@ -241,16 +241,17 @@
                         c.y = pack.y;
                 }
             }
-
         });
 
-
+        // on game over, hide canvas and show game over screen. checks and shows who won
         socket.on("GAME_OVER",function(data){
             $("#ctx").hide();
             $("#gameover").show();
+            
             var winner;
             var scores=[];
             var high_score=0;
+
             for(var i in Player.list){
                 var p = Player.list[i];
                 scores.push(p.score);
@@ -259,51 +260,58 @@
                     high_score = p.count;
                 }
                 if(p.number ==="1"){
-                    console.log('player1');
                     $("#player1score").html("Player 1 score: "+ p.count);
                 
                 }else{
-
-                    console.log('player2');
                     $("#player2score").html("Player 2 score: " + p.count);
                 }
             }
 
+            // Tie
             if(scores[0]===scores[1]){
                 $("#result").html("Tie game!");
+
             }else{
+
+                // Winner
                 if(selfId===winner.id){
                       $("#result").html("You won!");
+
+                // Loser
                 }else{
                     $("#result").html("You lose.......");
                 }
             }
-            
-
           
         });
 
-        // remove, notifies the client if entity has been removed
+        // remove deletes the players that have been deleted on the server locally on client
         socket.on("remove",function(data){
             for(var i=0; i<data.player.length; i++){
                 delete Player.list[data.player[i]];
             }
         });
 
+        // keeps track of coordinates where players have died, used for drawing the blood.png
         var roadkillCoordinates = {};
-        // loop for drawing players in local Player list
+
+        // called 25 frames per second
         setInterval(function(){
-            console.log(selfId + " " + timer);
             if(!selfId){
                 return;
             }
+            // clear canvas each frame and redraw map, new count (scores) and time
             ctx.clearRect(0,0,725,408);
             drawMap();
             drawCount();
             drawTimer();
+
+            // draw each blood splatter
             for(var key in roadkillCoordinates){
                 drawBlood(key, roadkillCoordinates[key]);
             }
+
+            // draw player, blood and dummy bunny (bunnies that have made it safely to the other side)
             for(var i in Player.list){
                 p = Player.list[i];
                 if(p.alive === true){
@@ -311,89 +319,79 @@
                 } else{
                     drawBlood(p.xDeathPos, p.yDeathPos);
                     roadkillCoordinates[p.xDeathPos] = p.yDeathPos;
-                
                 }
                 for(var j in p.successCoords){
                     console.log(j);
                     drawDummyBunny(p,p.successCoords[j][0],p.successCoords[j][1]);
                 }
-                
-
             }
+
+            // draw all cars
             for(var i in Car.list){
                 Car.list[i].draw();
             }
 
         }, 40);
 
+        // draws the map (svg background)
         var drawMap = function(){
             ctx.drawImage(Img.map,0,0);
         }
 
+        // draws the count (number of bunnies saved) for each player
         var drawCount = function(){
             ctx.fillStyle = "white";
-            //console.log("SCORE is: " +Player.list[selfId].score);
             var count = Player.list[selfId].count;
             ctx.fillText(count+" bunnies saved", 18, 40);
         }
 
+        // draw blood splatter, x and y are coordinates where bunnies have died before
         var drawBlood = function(x,y){
             var width = Img.blood.width*0.05;
             var height = Img.blood.height*0.05;
             ctx.drawImage(Img.blood, 0, 0, Img.blood.width, Img.blood.height, x-width/2, y-height/2, width, height);
         }
 
+        // draws the bunnies that have made a successful crossing to the other side
         var drawDummyBunny = function(currentPlayer, x,y){
             if(currentPlayer.number === "1"){
-                    var width = Img.player1.width;
-                    var height = Img.player1.height;
+                var width = Img.player1.width;
+                var height = Img.player1.height;
 
-                    console.log("x,y: ", x, y);
-                    console.log(width, height);
-                    console.log("x-width/3, y-width/4: ",x-width/3, y-width/4);
+                ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
+                } 
+            else if(currentPlayer.number === "2"){
+                var width = Img.player2.width;
+                var height = Img.player2.height;
 
-                    ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
-
-            //    ctx.drawImage(Img.player1, Img.player1.width/3, Img.player1.height/4, Img.player1.width/3, Img.player1.height/4, x-width/2, y-height/2, width/3, height/4);
-
-                } else if(currentPlayer.number === "2"){
-                    var width = Img.player2.width;
-                    var height = Img.player2.height;
-
-                    ctx.drawImage(Img.player2, Img.player2.width/3, Img.player2.height/4, Img.player2.width/3, Img.player2.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
+                ctx.drawImage(Img.player2, Img.player2.width/3, Img.player2.height/4, Img.player2.width/3, Img.player2.height/4, x-((width/3)/2), y-((width/4)/2), width/3, height/4);
 
                 }
         }
 
+        // draw the time remaining
         var drawTimer = function(){
                 ctx.fillText("Time Remaining: " + timer,400,40); 
          }
 
-        // On key press
+        // event listner that listens to the players key presses 
         document.addEventListener("keydown",function(event){
-          //  console.log(event.keyCode);
             if(event.keyCode === 39){
-           //     console.log("hit right key");
                 socket.emit('keyPress',{inputId:'right',state:true});
-               // Player.playerDirection = 2;
             }
             else if(event.keyCode === 40){
                 socket.emit('keyPress',{inputId:'down',state:true});
-               // Player.playerDirection = 0;
             }
-             //   playerDirection = 1;
             else if(event.keyCode === 37){
                 socket.emit('keyPress',{inputId:'left',state:true});
-              //  Player.playerDirection = 1;
             }
             else if(event.keyCode === 38){
                 socket.emit('keyPress',{inputId:'up',state:true});
-              //  Player.playerDirection = 3;
             }
 
         });
 
-        // On key release, stop all movement
+        // on player's key release, stop all movement
         document.addEventListener("keyup", function(event){
             if(event.keyCode === 39)
                 socket.emit('keyPress',{inputId:'right',state:false});
@@ -404,6 +402,7 @@
             else if(event.keyCode === 38)
                 socket.emit('keyPress',{inputId:'up',state:false});
         });
+        
     </script>
 
 </head>
