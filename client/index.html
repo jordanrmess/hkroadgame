@@ -11,7 +11,7 @@
     <div id="gameover" class ="container">
         <div class="row">
             <div class="col-lg-12">
-                <h1>Game Over</h1>
+                <h1 id="result"></h1>
             </div>
         </div>
         <div class="row">
@@ -35,6 +35,20 @@
             </div>
      </div>
     </div>
+    <div id="full">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1>Sorry, game is full right now.</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <input type="button" value="Try Again" onclick="reloadPage()"/>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
@@ -42,7 +56,7 @@
     <script>
         // container for the images
         var Img = {};
-        var timer = 30;
+        var timer;
 
 
         // Player (bunny) images
@@ -90,7 +104,9 @@
 
 
         var reloadPage = function(){
+            socket.emit("newGame");
             location.reload();
+
         }
         // Player variables
 
@@ -161,10 +177,13 @@
     
         socket.on("denyPermission", function(){
             $("#ctx").hide();
+            $("#full").show();
+
         })
 
         // init, when new entities are created, contains all data
         socket.on("init", function(data){
+            // timer = 30;
             if(data.selfId){
                 //console.log("DEN FANNS: "+ data.selfId);
                 selfId = data.selfId;
@@ -229,17 +248,39 @@
         socket.on("GAME_OVER",function(data){
             $("#ctx").hide();
             $("#gameover").show();
+            var winner;
+            var scores=[];
+            var high_score=0;
             for(var i in Player.list){
                 var p = Player.list[i];
+                scores.push(p.score);
+                if(p.count>=high_score){
+                    winner=p;
+                    high_score = p.count;
+                }
                 if(p.number ==="1"){
                     console.log('player1');
                     $("#player1score").html("Player 1 score: "+ p.count);
+                
                 }else{
 
                     console.log('player2');
                     $("#player2score").html("Player 2 score: " + p.count);
                 }
             }
+
+            if(scores[0]===scores[1]){
+                $("#result").html("Tie game!");
+            }else{
+                if(selfId===winner.id){
+                      $("#result").html("You won!");
+                }else{
+                    $("#result").html("You lose.......");
+                }
+            }
+            
+
+          
         });
 
         // remove, notifies the client if entity has been removed
@@ -252,6 +293,7 @@
         var roadkillCoordinates = {};
         // loop for drawing players in local Player list
         setInterval(function(){
+            console.log(selfId + " " + timer);
             if(!selfId){
                 return;
             }

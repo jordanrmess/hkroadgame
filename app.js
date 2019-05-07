@@ -332,19 +332,22 @@ var Game = function(){
 
     //Time starts at 30 seconds
     var self = {
-        timeRemaining:30
+        timeRemaining:30,
         // numConnections:0
     }
    
 
     self.startTimer = function() {
-        if(self.timeRemaining > 0){
-            self.timeRemaining-=1; 
-            setTimeout(self.startTimer,1000)
-        }else{
-            //Time has run out, alert the clients
-            io.emit("GAME_OVER",Player.update()); 
-        }
+      
+            if(self.timeRemaining > 0){
+                self.timeRemaining-=1; 
+                setTimeout(self.startTimer,1000)
+            }else{
+                //Time has run out, alert the clients
+                io.emit("GAME_OVER",Player.update()); 
+                self.resetTimer;
+
+            }
         
     }
 
@@ -370,10 +373,10 @@ var Game = function(){
     return self; 
 }
 
-//Creating game object
-Game.init = function(){
-    currentGame = Game();
-}
+// //Creating game object
+// Game.init = function(){
+//     currentGame = Game();
+// }
 
 
 // Initializes an io Socket object 
@@ -407,41 +410,41 @@ io.sockets.on('connection',function(socket){
         currentConnections = SOCKET_IDS.length;
         console.log("currentConnections:", currentConnections);
         console.log("sockets connected: ", SOCKET_IDS);
+        if(currentConnections===2){ 
+            console.log("game started");
+
+
+            currentGame.resetTimer();
+
+
+            io.emit("GAME_STARTED");
+            //Start timer method
+            currentGame.startTimer(io); 
+        }
     }
     
 
 
-    if(currentConnections===2){ 
-        console.log("game started");
-        io.emit("GAME_STARTED");
-        //Start timer method
-        currentGame.startTimer(io); 
-    }
     
     // when one player disconnects, game is ended
     socket.on('disconnect',function(){
+        currentGame.active = false; 
+        currentGame.resetTimer();
         for(i in SOCKET_OBJECTS){
             io.emit("GAME_OVER", null);
             SOCKET_OBJECTS[i].disconnect();
         }
 
+        // remove disconnected player info
         delete SOCKET_LIST[socket.id];
         SOCKET_IDS.splice(SOCKET_IDS.indexOf(socket.id), 1); 
         currentConnections = SOCKET_IDS.length;
         Player.onDisconnect(socket);
 
 
-        console.log("socket disconnected, number of connections are now %s", currentConnections);
-        console.log("current sockets:", SOCKET_IDS);
-        console.log("random variable at end: ", rand);
-        console.log("-----------");
-    console.log("AT END. Connections: ", currentConnections);
-    console.log("AT END. Sockets connected:", SOCKET_IDS);
-
     if (currentConnections === 0){
-        currentGame.resetTimer();
- //       initializeServer=true;
         AVAILABLE_PLAYERS = [1,2];
+        restart = true;
     }
 
     });
@@ -451,15 +454,21 @@ var initPack = {player:[],car:[],game:[]};
 var removePack = {player:[]};
 
 var initializeServer = true;
-
+var restart = false;
 // Loops through every player in our player list, and will update the X and Y position.
 setInterval(function(){
     // pack contains information about every single player in the game, and will be sent to every player conncted
     if(initializeServer){
         Car.onConnect(); 
-        Game.init();
+        currentGame = Game();
         initializeServer = false;
     }
+    if(restart){
+        currentGame = Game();
+        restart=false;
+    }
+    
+    //inti game and flip flag
     var pack = {
         player:Player.update(),
         car:Car.update(),
@@ -477,6 +486,7 @@ setInterval(function(){
     initPack.car = []; 
     initPack.game=[];
     removePack.player = [];
+    console.log('Socket ids in game: ',SOCKET_IDS);
 
 
 },1000/25);
